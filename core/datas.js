@@ -7,7 +7,6 @@ module.exports = function() {
     login: {
       // 请求方法, 请求数据, 未处理时的返回结果
       format: function(method, data, result){
-        console.log(arguments);
         if(method === 'post'){
           result.data.token = 'new token';
         }
