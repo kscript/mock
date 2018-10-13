@@ -5,6 +5,8 @@
 ```npm
   npm run mock
 ```
+## demo
+项目运行后, 打开首页(http://localhost:3000) 查看
 ## 创建api接口:
   在创建接口时, 一般只需要关注 [datas.js]("https://github.com/kscript/moke/core/datas.js") 文件, 该文件的书写格式为:
 ```javascript
