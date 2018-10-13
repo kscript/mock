@@ -1,4 +1,5 @@
 let mockData = require('./datas')();
+let fs = require('fs');
 module.exports = (req, res, next) => {
   let result = {};
   let url = req._parsedUrl.pathname.slice(1);

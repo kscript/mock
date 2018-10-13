@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <script src="js/axios.min.js"></script>
+  <style>
+    *{ padding: 0; margin: 0; box-sizing: border-box; } .hidden{ display: none; } .main{ margin: 20px; width: 440px; padding: 20px; background: #f4f4f4; } .request{ width: 100%; padding: 10px 0; } .request li{ padding: 5px 0; list-style: none; } .request label{ color: #888; font-size: 12px; } .request label input{ padding: 3px 6px; margin-left: 5px; width: 260px; border: 1px solid #ddd; border-radius: 3px; outline: none; } .request .btn{ padding: 3px 8px; border-radius: 5px; border: none; color: #fff; background: #8BC34A; margin-left: 5px; cursor: pointer; outline: none; } .request .btn:active,.request .btn:hover{ outline: none; background: rgb(131, 187, 67); } .show-box{ position: relative; width: 100%; } .show-box .title{ position: absolute; top: 0; right: 0; padding: 2px 5px; font-size: 12px; background: #e1e1e1; color: #888; border-top-right-radius: 3px; } .show{ padding: 10px; width: 100%; min-height: 60px; color: #888; background: #ececec; font-size: 12px; border-radius: 3px; }
+  </style>
+  <script>
+    window.onload = function(){
+      var http = axios.create();
+      var $btn = $("btn");
+      var $show = $("show");
+      var $url = $("url");
+      var $method = $("method");
+      $btn.addEventListener('click', function(){
+        http({
+          url: $url.value || '/login',
+          method: $method.value || 'POST'
+        }).then(function(response){
+          console.log(response); 
+          $show.innerHTML = JSON.stringify(response.data);
+        })
+      });
+
+      function $(id){
+        return document.getElementById(id);
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="request">
+      <ul>
+        <li class="hidden">
+          <input type="text">
+        </li>
+        <li>
+          <label for="url">
+            请求地址: <input type="text" id="url" placeholder="/login" autocomplete="off">
+          </label>
+          <button id="btn" class="btn">发送请求</button>
+        </li>
+        <li>
+          <label for="method">
+            请求方式: <input type="text" id="method" placeholder="POST" autocomplete="off">
+          </label>
+        </li>
+      </ul>
+    </div>
+    <div class="show-box">
+      <div class="title">请求结果</div>
+      <div id="show" class="show">-</div>
+    </div>
+</div>
+</body>
+</html>

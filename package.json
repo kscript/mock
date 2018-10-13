@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "mock": "json-server core/db.json --middlewares core --port 12321",
+    "mock": "json-server src/db.json --middlewares src --port 3000",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -13,7 +13,8 @@
   },
   "keywords": [
     "mock",
-    "js"
+    "js",
+    "json-server"
   ],
   "author": "kscript",
   "license": "MIT",
