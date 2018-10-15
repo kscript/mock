@@ -1,3 +1,4 @@
+var Mock = require('mockjs');
 let mockData = require('./datas')();
 module.exports = (req, res, next) => {
   let result = {};
@@ -16,7 +17,7 @@ module.exports = (req, res, next) => {
     // 验证请求方法
     if (data[method]) {
       res.writeHead(200, headConfig);
-      result = data[method];
+      result = Mock.mock(data[method]);
     } else {
       res.writeHead(405, headConfig);
       result = {

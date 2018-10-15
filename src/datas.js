@@ -1,4 +1,3 @@
-var Mock = require('mockjs');
 var localStorage = require('./localstorage');
 
 module.exports = function() {
@@ -12,22 +11,22 @@ module.exports = function() {
         }
         return result;
       },
-      get: Mock.mock({
+      get: {
         code: 200,
         message: 'ok',
         data: {
           appKey: localStorage.getItem('appKey'),
           token: localStorage.getItem('token')
         }
-      }),
-      post: Mock.mock({
+      },
+      post: {
         code: 200,
         message: 'ok',
         data: {
           appKey: localStorage.getItem('appKey'),
           token: localStorage.getItem('token')
         }
-      })
+      }
     }
   }
 
