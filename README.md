@@ -1,15 +1,15 @@
-# mock
+# ks-mock
 一个mock服务端api的工具
 
-# 使用场景
-## 1. 作为单独的 mock 服务器使用
-### 运行:
+## 使用场景
+### 1. 作为单独的 mock 服务器使用
+#### 运行:
 ```npm
   npm run mock
 ```
 项目运行后, 打开首页(http://localhost:3000) 可查看demo
 
-## 2. 在其它项目中使用
+### 2. 在其它项目中使用
 1. 安装依赖
 ```npm
   cnpm install --save-dev json-server mockjs
@@ -22,7 +22,7 @@
 }
 ```
 
-## 3. 作为webpack 插件使用
+### 3. 作为webpack 插件使用
 安装
 ```npm
 npm install --save-dev ks-mock
@@ -30,7 +30,7 @@ npm install --save-dev ks-mock
 使用
 ```javascript
 // webpack.config.js
-const KsMock = require("ks-mock);
+const KsMock = require("ks-mock");
 module.exports = {
   ...
   plugins: [
@@ -47,7 +47,7 @@ module.exports = {
 }
 ```
 
-# 创建api接口:
+## 创建api接口:
   在场景1、2中创建接口, 一般只需要关注 [datas.js]("https://github.com/kscript/moke/core/datas.js") 文件,
   该文件的书写格式为:
 ```javascript
