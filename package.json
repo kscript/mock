@@ -1,11 +1,10 @@
 {
-  "name": "mock",
-  "version": "1.0.0",
-  "description": "",
+  "name": "ks-mock",
+  "version": "1.0.2",
+  "description": "mock server",
   "main": "index.js",
   "scripts": {
-    "mock": "json-server src/db.json --middlewares src --port 3000",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "mock": "node src"
   },
   "repository": {
     "type": "git",
@@ -23,10 +22,10 @@
   },
   "homepage": "https://github.com/kscript/mock#readme",
   "dependencies": {
-    "json-server": "^0.14.0"
-  },
-  "devDependencies": {
     "json-server": "^0.14.0",
     "mockjs": "^1.0.1-beta3"
-  }
+  },
+  "__npminstall_done": "Tue Oct 16 2018 09:56:36 GMT+0800 (GMT+08:00)",
+  "_from": "ks-mock@1.0.1",
+  "_resolved": "http://registry.npm.taobao.org/ks-mock/download/ks-mock-1.0.1.tgz"
 }
