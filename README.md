@@ -40,7 +40,7 @@ module.exports = {
         headConfig: null, // 服务器请求头设置
         crossDomain: true, // 是否允许跨域 当 headConfig 不为空时忽略该项
       },
-      part: 3000
+      port: 3000
     })
     ...
   ]

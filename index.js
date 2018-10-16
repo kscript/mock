@@ -1,9 +1,9 @@
 // 作为 webpack 插件项目时的入口
 const server = require('./src/server.js');
 
-function KsMock({ config = {}, part = 3000}) {
+function KsMock({ config = {}, port = 3000}) {
     this.config = config;
-    this.part = part;
+    this.port = port;
 }
 
 KsMock.prototype.apply = function (compiler) {

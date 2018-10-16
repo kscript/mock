@@ -20,9 +20,9 @@ server.use(middlewares);
  * @param {mockData} config.mockData - mock数据json(支持 mockjs 中的写法)
  * @param {headConfig} config.headConfig - 服务端请求头信息配置
  * @param {boolean} config.crossDomain - 是否跨域
- * @param {number} part - 服务器端口
+ * @param {number} port - 服务器端口
  */
-const Server = (config, part) => {
+const Server = (config, port) => {
 
   // To handle POST, PUT and PATCH you need to use a body-parser
   // You can use the one used by JSON Server
@@ -62,8 +62,8 @@ const Server = (config, part) => {
   });
 
   server.use(router);
-  server.listen(part, () => {
-    console.log("已启动json-server服务器 http://localhost:" + part);
+  server.listen(port, () => {
+    console.log("已启动json-server服务器 http://localhost:" + port);
   });
 }
 module.exports = Server;
