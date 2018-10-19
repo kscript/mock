@@ -3,7 +3,15 @@
 
 ## 使用场景
 ### 1. 作为单独的 mock 服务器使用
-#### 运行:
+#### 下载
+```git
+  git clone https://github.com/kscript/mock.git
+```
+#### 安装
+```npm
+  npm i
+```
+#### 运行
 ```npm
   npm run mock
 ```
@@ -12,7 +20,7 @@
 ### 2. 在其它项目中使用
 1. 安装依赖
 ```npm
-  cnpm install --save-dev json-server mockjs
+  npm i json-server mockjs -D
 ```
 2. 在要使用的项目里新建一个文件夹, 然后将 src 目录下文件复制到该文件夹, 最后添加指令到package.json
 ```javascript
@@ -25,7 +33,7 @@
 ### 3. 作为webpack 插件使用
 安装
 ```npm
-npm install --save-dev ks-mock
+  npm i ks-mock -D
 ```
 使用
 ```javascript
