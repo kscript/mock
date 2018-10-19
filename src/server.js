@@ -50,7 +50,8 @@ const Server = (config, port) => {
         }
       }
       if (data.format) {
-        result = data.format(method, req.query, result);
+        let params = Object.assign({}, req.body || {}, req.query);
+        result = data.format(method, params , result);
       }
     } else {
       res.writeHead(404, headConfig);
@@ -65,7 +66,8 @@ const Server = (config, port) => {
   server.use(router);
   server.listen(port, () => {
     console.log();
-    console.log("已启动json-server服务器", "http://localhost:" + port);
+    console.log(`已启动json-server服务器 http://localhost:${port}`);
+    // console.log("已启动json-server服务器", "http://localhost:" + port);
     console.log();
   });
 }
