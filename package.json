@@ -1,7 +1,7 @@
 {
   "name": "ks-mock",
-  "version": "1.0.6",
-  "description": "mock server",
+  "version": "1.0.7",
+  "description": "mock server 构建后端API服务",
   "main": "index.js",
   "scripts": {
     "mock": "node src"
@@ -11,8 +11,9 @@
     "url": "git+https://github.com/kscript/mock.git"
   },
   "keywords": [
-    "mock",
     "js",
+    "api",
+    "mock",
     "mockjs",
     "json-server"
   ],

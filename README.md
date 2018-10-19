@@ -3,26 +3,26 @@
 
 ## 使用场景
 ### 1. 作为单独的 mock 服务器使用
-#### 下载
+下载
 ```git
   git clone https://github.com/kscript/mock.git
 ```
-#### 安装
+安装
 ```npm
   npm i
 ```
-#### 运行
+运行
 ```npm
   npm run mock
 ```
 项目运行后, 打开首页(http://localhost:3000) 可查看demo
 
 ### 2. 在其它项目中使用
-1. 安装依赖
+安装依赖
 ```npm
   npm i json-server mockjs -D
 ```
-2. 在要使用的项目里新建一个文件夹, 然后将 src 目录下文件复制到该文件夹, 最后添加指令到package.json
+在要使用的项目里新建一个文件夹, 然后将 src 目录下文件复制到该文件夹, 最后添加指令到package.json
 ```javascript
 // 将 src 修改为复制后的脚本地址
 "script":{
