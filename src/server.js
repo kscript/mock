@@ -1,8 +1,9 @@
 const Mock = require('mockjs');
+const path = require('path');
 const jsonServer = require('json-server');
 const server = jsonServer.create();
 // 路径从根目录开始?
-const router = jsonServer.router("src/db.json");
+const router = jsonServer.router(path.resolve(__dirname, "db.json"));
 const middlewares = jsonServer.defaults();
 // 需要跨域时的请求头配置
 const headers = {
@@ -63,7 +64,7 @@ const Server = (config, port) => {
 
   server.use(router);
   server.listen(port, () => {
-    console.log("已启动json-server服务器 http://localhost:" + port);
+    console.log("已启动json-server服务器", "http://localhost:" + port);
   });
 }
 module.exports = Server;
