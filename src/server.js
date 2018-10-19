@@ -64,7 +64,9 @@ const Server = (config, port) => {
 
   server.use(router);
   server.listen(port, () => {
+    console.log();
     console.log("已启动json-server服务器", "http://localhost:" + port);
+    console.log();
   });
 }
 module.exports = Server;

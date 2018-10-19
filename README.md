@@ -73,3 +73,6 @@ module.exports = {
   }
 ```
   在场景3中创建接口, 除了 datas文件 改为 在webpack的plugin配置里传参 外, 格式与上面的相同.
+
+## License
+MIT
