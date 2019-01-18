@@ -4,37 +4,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Document</title>
+  <title>ks-mock模拟请求</title>
   <script src="js/axios.min.js"></script>
   <style>
-    *{ padding: 0; margin: 0; box-sizing: border-box; } .hidden{ display: none; } .main{ margin: 20px; width: 440px; padding: 20px; background: #f4f4f4; } .request{ width: 100%; padding: 10px 0; } .request li{ padding: 5px 0; list-style: none; } .request label{ color: #888; font-size: 12px; } .request label input{ padding: 3px 6px; margin-left: 5px; width: 260px; border: 1px solid #ddd; border-radius: 3px; outline: none; } .request .btn{ padding: 3px 8px; border-radius: 5px; border: none; color: #fff; background: #8BC34A; margin-left: 5px; cursor: pointer; outline: none; } .request .btn:active,.request .btn:hover{ outline: none; background: rgb(131, 187, 67); } .show-box{ position: relative; width: 100%; } .show-box .title{ position: absolute; top: 0; right: 0; padding: 2px 5px; font-size: 12px; background: #e1e1e1; color: #888; border-top-right-radius: 3px; } .show{ padding: 10px; width: 100%; min-height: 60px; color: #888; background: #ececec; font-size: 12px; border-radius: 3px; }
+    *{ padding: 0; margin: 0; box-sizing: border-box; }
+    .hidden{ display: none; }
+    .main{ width: 440px; padding: 20px; margin: 20px; background: #f4f4f4; }
+    .request-box{ width: 100%; padding: 10px 0; }
+    .request-box li{ padding: 5px 0; list-style: none; }
+    .request-box label{ color: #888; font-size: 12px; }
+    .request-box label input{ width: 260px; padding: 3px 6px; margin-left: 5px; border: 1px solid #ddd; border-radius: 3px; outline: none; }
+    .request-box .btn{ padding: 3px 8px; margin-left: 5px; border-radius: 5px; border: none; color: #fff; background: #8BC34A; cursor: pointer; outline: none; }
+    .request-box .btn:active,
+    .request-box .btn:hover{ outline: none; background: rgb(131, 187, 67); }
+    .response-box{ position: relative; width: 100%; }
+    .response-box .title{ position: absolute; top: 0; right: 0; padding: 2px 5px; border-top-right-radius: 3px; font-size: 12px; background: #e1e1e1; color: #888; cursor: pointer; }
+    .response-box .response{ width: 100%; padding: 10px; min-height: 60px; color: #888; background: #ececec; font-size: 12px; border-radius: 3px; }
   </style>
-  <script>
-    window.onload = function(){
-      var http = axios.create();
-      var $btn = $("btn");
-      var $show = $("show");
-      var $url = $("url");
-      var $method = $("method");
-      $btn.addEventListener('click', function(){
-        http({
-          url: $url.value || '/login',
-          method: $method.value || 'POST'
-        }).then(function(response){
-          console.log(response); 
-          $show.innerHTML = JSON.stringify(response.data);
-        })
-      });
-
-      function $(id){
-        return document.getElementById(id);
-      }
-    }
-  </script>
 </head>
 <body>
   <div class="main">
-    <div class="request">
+    <div class="request-box">
       <ul>
         <li class="hidden">
           <input type="text">
@@ -52,10 +42,33 @@
         </li>
       </ul>
     </div>
-    <div class="show-box">
+    <div class="response-box">
       <div class="title">请求结果</div>
-      <div id="show" class="show">-</div>
+      <pre id="response" class="response">-</pre>
     </div>
-</div>
+  </div>
+  <script>
+    var http = axios.create()
+    var $btn = $('btn')
+    var $url = $('url')
+    var $response = $('response')
+    var $method = $('method')
+
+    $btn.addEventListener('click', function () {
+      http({
+        url: $url.value || '/login',
+        method: $method.value || 'POST'
+      }).then(function (response) {
+        console.log(response)
+        $response.innerHTML = JSON.stringify(response.data, null, 2)
+      }).catch(function (e) {
+        console.log(e)
+      })
+    })
+
+    function $(id) {
+      return document.getElementById(id)
+    }
+  </script>
 </body>
 </html>

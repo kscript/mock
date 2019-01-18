@@ -1,7 +1,7 @@
 {
   "name": "ks-mock",
-  "version": "1.0.7",
-  "description": "mock server 构建后端API服务",
+  "version": "1.0.8",
+  "description": "mock server 模拟后端API接口",
   "main": "index.js",
   "scripts": {
     "mock": "node src"

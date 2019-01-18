@@ -20,7 +20,7 @@
 ### 2. 在其它项目中使用
 安装依赖
 ```npm
-  npm i json-server mockjs -D
+  npm i json-server mockjs path -D
 ```
 在要使用的项目里新建一个文件夹, 然后将 src 目录下文件复制到该文件夹, 最后添加指令到package.json
 ```javascript
@@ -48,7 +48,7 @@ module.exports = {
         headConfig: null, // 服务器请求头设置
         crossDomain: true, // 是否允许跨域 当 headConfig 不为空时忽略该项
       },
-      port: 3000
+      port: 3030
     })
     ...
   ]
@@ -56,6 +56,7 @@ module.exports = {
 ```
 
 ## 创建api接口:
+  支持 mock.js 中的写法, [查看 mock.js 使用文档](https://github.com/nuysoft/Mock/wiki)  
   在场景1、2中创建接口, 一般只需要关注 [datas.js]("https://github.com/kscript/moke/core/datas.js") 文件,
   该文件的书写格式为:
 ```javascript
