@@ -65,7 +65,11 @@
         console.log(e)
       })
     })
-
+    // 如果是在 github page 中
+    if (location.host.slice(-'.github.io'.length) === '.github.io') {
+      $url.value= '/mock/public/js/data.json'
+      $method.value = 'GET'
+    }
     function $(id) {
       return document.getElementById(id)
     }
