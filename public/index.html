@@ -53,13 +53,23 @@
     var $url = $('url')
     var $response = $('response')
     var $method = $('method')
+    http.interceptors.response.use(function (response) {
+      alert(response.data.message)
+      return response
+    }, function (error) {
+      if (typeof error === 'object' && error.response) {
+        alert(error.response.data.message)
+      } else {
+        alert("请求失败")
+      }
+      return error
+    })
 
     $btn.addEventListener('click', function () {
       http({
         url: $url.value || '/login',
         method: $method.value || 'POST'
       }).then(function (response) {
-        console.log(response)
         $response.innerHTML = JSON.stringify(response.data, null, 2)
       }).catch(function (e) {
         console.log(e)

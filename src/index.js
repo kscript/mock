@@ -1,11 +1,14 @@
-// 普通项目入口
-const server = require('./server.js')
-const datas = require('./datas.js')
-server(
-  {
-    mockData: datas,
-    headConfig: null,
-    crossDomain: true
-  },
-  3030
-)
+import server from './server.js'
+
+function KsMock(option) {
+    this.option = option
+}
+
+KsMock.prototype.apply = function (compiler) {
+    server(this.option)
+    compiler.plugin("emit", (compilation, callback) => {
+        callback()
+    })
+}
+
+export default KsMock

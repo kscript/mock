@@ -1,37 +1,29 @@
-let store = require('./localstorage').store
+// import auth from './auth.js'
+// import config from './config.js'
+export default {
+    login: {
+        // 转发
+        relay: null,
+        // 格式化请求结果
+        format: function(method, params, result){
 
-module.exports = {
-  // 登录
-  login: {
-    /**
-     * 对返回数据进行二次包装
-     * @param {string} method 请求方法
-     * @param {object} data 请求参数
-     * @param {object} result 不处理时的返回结果
-     */
-    format: function(method, data, result){
-      // if(method === 'post'){
-      //   result.data.token = 'new token'
-      // }
-      return result
+        },
+        // 模拟请求出错
+        error: function(method, params, result){
+
+        },
+        // post方法的默认请求结果
+        post: {
+
+        }
     },
-    get: {
-      code: 200,
-      message: 'ok',
-      data: {
-        uid: '@natural(1000,99999999)',
-        token: '@GUID',
-        appKey: store.appKey
-      }
-    },
-    post: {
-      code: 200,
-      message: 'ok',
-      data: {
-        uid: '@natural(1000,99999999)',
-        token: '@GUID',
-        appKey: store.appKey
-      }
+    test: {
+        get: {
+            code: 200,
+            message: 'ok',
+            data: {
+                text: "hello world"
+            }
+        }
     }
-  }
 }

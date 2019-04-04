@@ -1,10 +1,12 @@
 {
   "name": "ks-mock",
-  "version": "1.0.9",
+  "version": "1.1.3",
   "description": "mock server 模拟后端API接口",
   "main": "index.js",
   "scripts": {
-    "mock": "node src"
+    "mock": "npm run bundle && node localhost.js",
+    "bundle": "rollup -c -i ./src/localhost.js -o localhost.js",
+    "build": "rollup -c -o index.js"
   },
   "repository": {
     "type": "git",
@@ -26,6 +28,7 @@
   "dependencies": {
     "json-server": "^0.14.0",
     "mockjs": "^1.0.1-beta3",
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "request": "^2.88.0"
   }
 }
