@@ -64,8 +64,10 @@ const Server = option => {
         port: 3030,
         crossDomain: true,
         headoption: null,
+        mockData: {},
         bounded: !!option.loginUrl
     }, option);
+    let mockData = option.mockData;
 
     // To handle POST, PUT and PATCH you need to use a body-parser
     // You can use the one used by JSON Server
