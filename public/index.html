@@ -8,24 +8,30 @@
   <script src="js/axios.min.js"></script>
   <style>
     *{ padding: 0; margin: 0; box-sizing: border-box; }
+    .flex {display: flex;}
     .hidden{ display: none; }
     .main{ width: 440px; padding: 20px; margin: 20px; background: #f4f4f4; }
     .request-box{ width: 100%; padding: 10px 0; }
     .request-box li{ padding: 5px 0; list-style: none; }
-    .request-box label{ color: #888; font-size: 12px; }
+    .request-box label{ color: #888; font-size: 12px; width: 320px; display: inline-block;}
     .request-box label input{ width: 260px; padding: 3px 6px; margin-left: 5px; border: 1px solid #ddd; border-radius: 3px; outline: none; }
+    .request-box .flex{ width: 318px; flex-direction: row; justify-content: space-between; line-height: 22px; }
+    .request-box .flex .text { width: 50px; text-align: right; display: inline-block; }
+    .request-box .flex input { width: 100px; }
+
     .request-box .btn{ padding: 3px 8px; margin-left: 5px; border-radius: 5px; border: none; color: #fff; background: #8BC34A; cursor: pointer; outline: none; }
     .request-box .btn:active,
     .request-box .btn:hover{ outline: none; background: rgb(131, 187, 67); }
     .response-box{ position: relative; width: 100%; }
     .response-box .title{ position: absolute; top: 0; right: 0; padding: 2px 5px; border-top-right-radius: 3px; font-size: 12px; background: #e1e1e1; color: #888; cursor: pointer; }
     .response-box .response{ width: 100%; padding: 10px; min-height: 60px; color: #888; background: #ececec; font-size: 12px; border-radius: 3px; }
+    
   </style>
 </head>
 <body>
   <div class="main">
     <div class="request-box">
-      <ul>
+      <ul class="list">
         <li class="hidden">
           <input type="text">
         </li>
@@ -39,6 +45,22 @@
           <label for="method">
             请求方式: <input type="text" id="method" placeholder="POST" autocomplete="off">
           </label>
+          <button id="add" class="btn">新增参数</button>
+        </li>
+        <li class="params hidden">
+          <label for="">
+            <div class="flex">
+              <div class="flex-item">
+                <span class="text">参数名: </span>
+                <input name="name" type="text" placeholder="" autocomplete="off">
+              </div>
+              <div class="flex-item">
+                <span class="text">参数值: </span>
+                <input name="value" type="text" placeholder="" autocomplete="off">
+              </div>
+            </div>
+          </label>
+          <button class="btn remove"> - </button>
         </li>
       </ul>
     </div>
@@ -48,11 +70,34 @@
     </div>
   </div>
   <script>
-    var http = axios.create()
-    var $btn = $('btn')
-    var $url = $('url')
-    var $response = $('response')
-    var $method = $('method')
+    var http = axios.create({
+      transformRequest: [function (data) {
+        var list = []
+        if (data instanceof Object) {
+          if (Array.isArray && Array.isArray(data)) {
+            for (var i = 0; i < data.length; i++) {
+              if (data[i] instanceof Object && data.hasOwnproperty('name')) {
+                list.push(data.name + '=' + (data.value || ''))
+              }
+            }
+          } else {
+            for (var key in data) {
+              list.push(key + '=' + (data[key] || ''))
+            }
+          }
+        }
+        return list.join("&");
+      }]
+    })
+    var $btn = $('#btn')
+    var $url = $('#url')
+    var $response = $('#response')
+    var $method = $('#method')
+    var $add = $('#add')
+    var $list = $(".list")
+    var $params = $list.removeChild($(".params")).cloneNode(true)
+    $params.className = 'params'
+
     http.interceptors.response.use(function (response) {
       alert(response.data.message)
       return response
@@ -65,11 +110,37 @@
       return error
     })
 
+    $list.addEventListener("click", function(e){
+      e = e || window.event;
+      var target = e.target || e.srcElement
+      if (/button/i.test(target.tagName) && /remove/.test(target.className)) {
+        this.removeChild(target.parentElement)
+      }
+    })
+    $add.addEventListener("click", function () {
+      var newNode = $params.cloneNode(true)
+      $list.appendChild(newNode)
+    })
     $btn.addEventListener('click', function () {
-      http({
+      var params = {}
+      var paramsEl = $list.querySelectorAll('.params')
+      var options = {
         url: $url.value || '/login',
-        method: $method.value || 'POST'
-      }).then(function (response) {
+        method: $method.value || 'POST',
+      }
+      paramsEl.forEach(function(item, index){
+        var name = $('[name="name"]', item)
+        var value = $('[name="value"]', item)
+        if (name.value) {
+          params[name.value] = value.value
+        }
+      });
+      if (/get/i.test($method.value)) {
+        options.params = params
+      } else {
+        options.data = params
+      }
+      http(options).then(function (response) {
         $response.innerHTML = JSON.stringify(response.data, null, 2)
       }).catch(function (e) {
         console.log(e)
@@ -80,8 +151,8 @@
       $url.value= '/mock/public/js/data.json'
       $method.value = 'GET'
     }
-    function $(id) {
-      return document.getElementById(id)
+    function $(selector, context) {
+      return (context || document).querySelector(selector)
     }
   </script>
 </body>
