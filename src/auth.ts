@@ -1,13 +1,13 @@
 import { user, server } from './config'
 
 class Auth {
-    get(key) {
+    get(key: string) {
         if (typeof key === 'string') {
             return user.get('key')
         }
         return JSON.parse(JSON.stringify(user.get()))
     }
-    login(data) {
+    login(data: Object) {
         user.reset(data)
         server.set('login', true)
     }
@@ -15,7 +15,7 @@ class Auth {
         user.clear()
         server.set('login', false)
     }
-    verify() {
+    verify(): boolean {
         return server.get('login')
     }
 }

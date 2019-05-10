@@ -65,6 +65,7 @@ const Server = option => {
 
     server.use((req, res, next) => {
         let {
+            url,
             data,
             method,
             urlKey,
@@ -78,6 +79,10 @@ const Server = option => {
         // 1. 验证用户请求的api地址是否有数据
         if (data || transfer) {
             data = data || {}
+            result = JSON.parse(JSON.stringify(data[method] || {}))
+            if (!(result instanceof Object)) {
+                result = {}
+            }
             // 2. 处理鉴权
             // 当前链接不是登录入口 && 启用了鉴权功能 && 当前api需要鉴权 && 用户未能通过鉴权
             if(urlKey !== option.loginUrl && option.bounded && !data.public && !auth.verify()) {
@@ -90,7 +95,7 @@ const Server = option => {
             }
             // 3. 处理错误
             if (data.error && typeof data.error === 'function') {
-                let errResult = data.error(method, params, result)
+                let errResult = data.error(method, params, result, { url })
                 if (errResult) {
                     // 返回函数时, 可以在data.error得到两个参数res, headConfig, 方便进行自定义的错误输出
                     if (typeof errResult === 'function') {
@@ -112,14 +117,26 @@ const Server = option => {
             }
             // 4. 处理转发请求
             if (data.relay) {
-                let relay: string = typeof data.relay === 'function' ? data.relay(method, params, data[method]) : data.relay
-                request(relay, (error, response, body) => {
-                    if (!error && response.statusCode === 200) {
-                        res.writeHead(200, headConfig)
-                        res.send(body)
-                        // 如果是登录入口请求成功
-                        if (method === 'post' && urlKey === option.loginUrl) {
-                            auth.login(params)
+                let relay = typeof data.relay === 'function' ? data.relay(method, params, data[method], { url }) : data.relay
+                if (!Array.isArray(relay)){
+                    relay = [relay]
+                }
+                request.apply(request, relay.concat((error, response, body) => {
+                    if (!error) {
+                        try{
+                            if (response.statusCode === 200) {
+                                res.writeHead(200, headConfig)
+                                res.end(JSON.stringify(body))
+                            } else {
+                                res.writeHead(response.statusCode, headConfig)
+                                res.end(JSON.stringify(body))
+                            }
+                            // 如果是登录入口请求成功
+                            if (method === 'post' && urlKey === option.loginUrl) {
+                                auth.login(params)
+                            }
+                        } catch(e) {
+                            console.log(e)
                         }
                     } else {
                         res.writeHead(400, headConfig)
@@ -128,7 +145,7 @@ const Server = option => {
                             message: "请求失败"
                         }))
                     }
-                })
+                }))
                 return
             }
             // 5. 验证请求方法是否存在
@@ -139,9 +156,8 @@ const Server = option => {
                 }
                 // 如果存在当前的请求方法, 先根据配置进行处理, 再转交给 json-server
                 if (data[method]) {
-                    result = JSON.parse(JSON.stringify(data[method] || {}))
                     if (data.format) {
-                        result = data.format(method, params, result) || result
+                        result = data.format(method, params, result, { url }) || result
                     }
                 }
                 // 如果没有配置当前的请求方法, 则后续操作由json-server控制
@@ -169,11 +185,15 @@ const Server = option => {
     })
 
     router.render = (req, res) => {
+        let {
+            url,
+            data,
+            method,
+            urlKey,
+            params,
+        } = getInfo(req, option, config.crossDomain)
+
         mockData = mockData || {}
-        let url = req._parsedUrl.pathname.replace(/^\//, '')
-        let urlKey = (url || '').replace(/\/$/, '').replace(/\//g, '_')
-        let params = Object.assign({}, req.body || {}, req.query)
-        let method = req.method.toLowerCase()
         let body = {
             code: 200,
             message: 'ok',

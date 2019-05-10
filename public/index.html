@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,68 +8,212 @@
   <title>ks-mock模拟请求</title>
   <script src="js/axios.min.js"></script>
   <style>
-    *{ padding: 0; margin: 0; box-sizing: border-box; }
-    .flex {display: flex;}
-    .hidden{ display: none; }
-    .main{ width: 440px; padding: 20px; margin: 20px; background: #f4f4f4; }
-    .request-box{ width: 100%; padding: 10px 0; }
-    .request-box li{ padding: 5px 0; list-style: none; }
-    .request-box label{ color: #888; font-size: 12px; width: 320px; display: inline-block;}
-    .request-box label input{ width: 260px; padding: 3px 6px; margin-left: 5px; border: 1px solid #ddd; border-radius: 3px; outline: none; }
-    .request-box .flex{ width: 318px; flex-direction: row; justify-content: space-between; line-height: 22px; }
-    .request-box .flex .text { width: 50px; text-align: right; display: inline-block; }
-    .request-box .flex input { width: 100px; }
+    * {
+      padding: 0;
+      margin: 0;
+      box-sizing: border-box;
+    }
 
-    .request-box .btn{ padding: 3px 8px; margin-left: 5px; border-radius: 5px; border: none; color: #fff; background: #8BC34A; cursor: pointer; outline: none; }
-    .request-box .btn:active,
-    .request-box .btn:hover{ outline: none; background: rgb(131, 187, 67); }
-    .response-box{ position: relative; width: 100%; }
-    .response-box .title{ position: absolute; top: 0; right: 0; padding: 2px 5px; border-top-right-radius: 3px; font-size: 12px; background: #e1e1e1; color: #888; cursor: pointer; }
-    .response-box .response{ width: 100%; padding: 10px; min-height: 60px; color: #888; background: #ececec; font-size: 12px; border-radius: 3px; }
-    
+    .flex {
+      display: flex;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .btn-default {
+      background: #888;
+    }
+
+    .btn-default.active,
+    .btn-default:active {
+      background: #777;
+    }
+
+    .btn-danger {
+      background: #f17473;
+    }
+
+    .btn-danger.active,
+    .btn-danger:hover {
+      background: #ea5655;
+    }
+
+    .btn-info {
+      background: #8BC34A;
+    }
+
+    .btn-info.active,
+    .btn-info:hover {
+      background: #81bb3f;
+    }
+
+    .btn {
+      outline: 0;
+    }
+
+    .layout-left {
+      width: 440px;
+      padding: 20px;
+      margin: 20px;
+      background: #f4f4f4;
+    }
+
+    .layout-right {
+      padding: 20px 0;
+      margin: 20px;
+    }
+
+    .request-box {
+      width: 100%;
+      padding: 10px 0;
+    }
+
+    .request-box li {
+      padding: 5px 0;
+      list-style: none;
+    }
+
+    .request-box label {
+      color: #888;
+      font-size: 12px;
+      width: 320px;
+      display: inline-block;
+    }
+
+    .request-box label input {
+      width: 260px;
+      padding: 3px 6px;
+      margin-left: 5px;
+      border: 1px solid #ddd;
+      border-radius: 3px;
+      color: #666;
+      outline: none;
+    }
+
+    .request-box .flex {
+      width: 318px;
+      flex-direction: row;
+      justify-content: space-between;
+      line-height: 22px;
+    }
+
+    .request-box .flex .text {
+      width: 50px;
+      text-align: right;
+      display: inline-block;
+    }
+
+    .request-box .flex input {
+      width: 100px;
+    }
+
+    .request-box .btn {
+      padding: 3px 8px;
+      margin-left: 5px;
+      border-radius: 5px;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .response-box {
+      position: relative;
+      width: 100%;
+    }
+
+    .response-box .title {
+      position: absolute;
+      top: 0;
+      right: 0;
+      padding: 2px 5px;
+      border-top-right-radius: 3px;
+      font-size: 12px;
+      background: #e1e1e1;
+      color: #888;
+      cursor: pointer;
+    }
+
+    .response-box .response {
+      width: 100%;
+      padding: 10px;
+      min-height: 60px;
+      color: #888;
+      background: #ececec;
+      font-size: 12px;
+      border-radius: 3px;
+    }
+
+    .message {
+      color: #666;
+      font-size: 14px;
+    }
+
+    h5 {
+      padding: 10px 20px;
+      color: #ea5655;
+    }
+    .mock label{ width: 100%!important; }
   </style>
 </head>
+
 <body>
-  <div class="main">
-    <div class="request-box">
-      <ul class="list">
-        <li class="hidden">
-          <input type="text">
-        </li>
-        <li>
-          <label for="url">
-            请求地址: <input type="text" id="url" placeholder="/login" autocomplete="off">
-          </label>
-          <button id="btn" class="btn">发送请求</button>
-        </li>
-        <li>
-          <label for="method">
-            请求方式: <input type="text" id="method" placeholder="POST" autocomplete="off">
-          </label>
-          <button id="add" class="btn">新增参数</button>
-        </li>
-        <li class="params hidden">
-          <label for="">
-            <div class="flex">
-              <div class="flex-item">
-                <span class="text">参数名: </span>
-                <input name="name" type="text" placeholder="" autocomplete="off">
+  <h5> 请通过 本地编译 的方式, 访问本地的示例页面. 在代码仓库中的示例页面仅做展示之用 </h5>
+  <main class="main flex">
+    <section class="layout-left">
+      <section class="request-box">
+        <ul class="list">
+          <li class="mock">
+            <label for="">
+              <input type="hidden">
+              <span class="text">预设接口:</span>
+              <button class="btn btn-default api" data-type="login">登录</button>
+              <button class="btn btn-default api" data-type="logout">退出</button>
+              <button class="btn btn-default api" data-type="info">获取信息</button>
+              <button class="btn btn-default api" data-type="relay">转发请求</button>
+              <button class="btn btn-default api" data-type="settings">配置</button>
+            </label>
+          </li>
+          <li>
+            <label for="url">
+              请求地址: <input type="text" id="url" placeholder="/login" autocomplete="off">
+            </label>
+            <button id="btn" class="btn btn-danger">发送请求</button>
+          </li>
+          <li>
+            <label for="method">
+              请求方式: <input type="text" id="method" placeholder="post" autocomplete="off">
+            </label>
+            <button id="add" class="btn btn-default">新增参数</button>
+          </li>
+          <li class="params hidden">
+            <label for="">
+              <div class="flex">
+                <div class="flex-item">
+                  <span class="text">参数名: </span>
+                  <input name="name" type="text" placeholder="" autocomplete="off">
+                </div>
+                <div class="flex-item">
+                  <span class="text">参数值: </span>
+                  <input name="value" type="text" placeholder="" autocomplete="off">
+                </div>
               </div>
-              <div class="flex-item">
-                <span class="text">参数值: </span>
-                <input name="value" type="text" placeholder="" autocomplete="off">
-              </div>
-            </div>
-          </label>
-          <button class="btn remove"> - </button>
-        </li>
-      </ul>
-    </div>
-    <div class="response-box">
-      <div class="title">请求结果</div>
-      <pre id="response" class="response">-</pre>
-    </div>
-  </div>
+            </label>
+            <button class="btn btn-default remove"> - </button>
+          </li>
+        </ul>
+      </section>
+      <section class="response-box">
+        <div class="title">请求结果</div>
+        <pre id="response" class="response"></pre>
+      </section>
+    </section>
+    <section class="layout-right">
+      <div class="message"></div>
+    </section>
+  </main>
   <script>
     var http = axios.create({
       transformRequest: [function (data) {
@@ -89,46 +234,124 @@
         return list.join("&");
       }]
     })
-    var $btn = $('#btn')
-    var $url = $('#url')
-    var $response = $('#response')
-    var $method = $('#method')
-    var $add = $('#add')
-    var $list = $(".list")
-    var $params = $list.removeChild($(".params")).cloneNode(true)
-    $params.className = 'params'
-
     http.interceptors.response.use(function (response) {
-      alert(response.data.message)
+      response.data.message !== 'ok' && alert(response.data.message)
       return response
     }, function (error) {
       if (typeof error === 'object' && error.response) {
-        alert(error.response.data.message)
+        alert((error.response.data || {}).message)
       } else {
         alert("请求失败")
       }
       return error
     })
-
-    $list.addEventListener("click", function(e){
-      e = e || window.event;
-      var target = e.target || e.srcElement
-      if (/button/i.test(target.tagName) && /remove/.test(target.className)) {
-        this.removeChild(target.parentElement)
+    function $(selector, context) {
+      return (context || document).querySelector(selector)
+    }
+    function siblings(el) {
+      var list = []
+      each([].slice.apply(el.parentElement.children), function (index, item) {
+        if (item !== el) {
+          list.push(item)
+        }
+      })
+      return list
+    }
+    function addClass(el, className) {
+      if (!hasClass(el, className)) {
+        var list = el.className.split(" ")
+        list.push(className)
+        el.className = list.join(" ")
       }
-    })
-    $add.addEventListener("click", function () {
-      var newNode = $params.cloneNode(true)
-      $list.appendChild(newNode)
-    })
+    }
+    function removeClass(el, className) {
+      var names = className.split(" ")
+      var list = el.className.split(" ")
+      for (var i = list.length - 1; i--;) {
+        if (names.indexOf(list[i]) >= 0) {
+          list.splice(i, 1)
+        }
+      }
+      el.className = list.join(" ")
+    }
+    function each(list, func) {
+      var flag = true
+      if (list instanceof Object) {
+        if (Array.isArray(list)) {
+          for (var i = 0; flag && i < list.length; i++) {
+            flag = func && func.call(list, i, list[i], list) !== false
+          }
+        } else {
+          for (var key in list) {
+            if ((func && func.call(list, key, list[key], list)) === false) {
+              return list
+            }
+          }
+        }
+      }
+      return list
+    }
+    function hasClass(el, className) {
+      return el && typeof className === 'string' ? new RegExp("(^a$|^a\\s+|\\s+a\\s+|\\s+a$)".replace(/a/g, className)).test(el.className) : false
+    }
+    function parser(data) {
+      var res = {}
+      var current
+      for (var type in data) {
+        current = data[type]
+        if (current.url) {
+          res[type] = (function (current) {
+            return function () {
+              $url.value = current.url
+              $method.value = current.method
+              each(current.list, function (index, item) {
+                if (item instanceof Object) {
+                  if (item.action === 'clear') {
+                    clearParams()
+                    $response.innerHTML = ''
+                  }
+                  if (typeof item.name === 'string') {
+                    var param = addParams()
+                    $("[name='name']", param).value = item.name
+                    $("[name='value']", param).value = item.value
+                  }
+                  if (typeof item.message === 'string') {
+                    $message.innerHTML = item.message
+                  }
+                } else if (item === 'clear') {
+                  clearParams()
+                  $response.innerHTML = ''
+                }
+              })
+            }
+          })(current)
+        }
+      }
+      return res
+    }
+
+  </script>
+  <script>
+    var prest
+    var $btn = $('#btn')
+    var $url = $('#url')
+    var $response = $('#response')
+    var $method = $('#method')
+    var $mock = $(".mock")
+    var $add = $('#add')
+    var $list = $(".list")
+    var $message = $(".message")
+    var $params = $list.removeChild($(".params")).cloneNode(true)
+    $params.className = 'params'
+
     $btn.addEventListener('click', function () {
       var params = {}
       var paramsEl = $list.querySelectorAll('.params')
       var options = {
         url: $url.value || '/login',
-        method: $method.value || 'POST',
+        method: $method.value || 'post',
       }
-      paramsEl.forEach(function(item, index){
+      paramsEl.forEach(function (item, index) {
         var name = $('[name="name"]', item)
         var value = $('[name="value"]', item)
         if (name.value) {
@@ -140,20 +363,148 @@
       } else {
         options.data = params
       }
+      // 如果是在 github page 中
+      if (location.host.slice(-'.github.io'.length) === '.github.io') {
+        options.url = '/mock/public/js/data.json'
+        options.method = 'get'
+      }
+
       http(options).then(function (response) {
-        $response.innerHTML = JSON.stringify(response.data, null, 2)
+        $response.innerHTML = JSON.stringify(response.data, null, 2) || ''
       }).catch(function (e) {
         console.log(e)
       })
     })
-    // 如果是在 github page 中
-    if (location.host.slice(-'.github.io'.length) === '.github.io') {
-      $url.value= '/mock/public/js/data.json'
-      $method.value = 'GET'
+
+    $mock.addEventListener("click", function (e) {
+      e = e || window.event;
+      var target = e.target || e.srcElement
+      if (hasClass(target, 'api')) {
+        addClass(target, "btn-info active")
+        removeClass(target, "btn-default")
+        each(siblings(target), function (index, item) {
+          if (hasClass(item, 'btn')) {
+            addClass(target, "btn-default")
+            removeClass(item, 'btn-info active')
+          }
+        })
+        prest && prest[target.getAttribute("data-type")]()
+      }
+    })
+    $list.addEventListener("click", function (e) {
+      e = e || window.event;
+      var target = e.target || e.srcElement
+      if (hasClass(target, "remove")) {
+        this.removeChild(target.parentElement)
+      }
+    })
+    $add.addEventListener("click", function () {
+      addParams()
+    })
+
+    function addParams() {
+      return $list.appendChild($params.cloneNode(true))
     }
-    function $(selector, context) {
-      return (context || document).querySelector(selector)
+    function clearParams(selector, context) {
+      (context || $list).querySelectorAll(selector || ".params").forEach(function (item, index) {
+        item.parentElement.removeChild(item)
+      })
     }
+
+    (function () {
+      try {
+        prest = JSON.parse(localStorage.getItem("prest"))
+      } catch (e) { }
+      var result = prest instanceof Object ? prest : {
+        login: {
+          url: '/login',
+          method: 'post',
+          list: [
+            {
+              action: 'clear'
+            },
+            {
+              message: '<p>账号: admin</p><p>密码: 123456</p><small>(有可能被改动, 如果报"密码错误", 可以在配置里获取实时信息)</small>'
+            },
+            {
+              name: 'username',
+              value: 'admin'
+            },
+            {
+              name: 'password',
+              value: '123456'
+            }
+          ]
+        },
+        logout: {
+          url: '/logout',
+          method: 'post',
+          list: [
+            {
+              action: 'clear'
+            },
+          ]
+        },
+        relay: {
+          url: '/relay',
+          method: 'get',
+          list: [
+            {
+              action: 'clear'
+            },
+            {
+              message: '会通过后台, 将请求转发给设定好的页面 http://localhost:3030/info'
+            },
+            {
+              name: 'username',
+              value: 'test'
+            }
+          ]
+        },
+        info: {
+          url: '/info',
+          method: 'get',
+          list: [
+            {
+              action: 'clear'
+            },
+            {
+              message: '在获取信息的例子里, 模拟了几种可能出现的情况:\
+              <ul>\
+                <li>  如果用户还未登录, 会被接口的鉴权处理拦截 </li>\
+                <li>  如果不传username, 会被接口的错误处理拦截 </li>\
+              </ul>'
+            },
+            {
+              name: 'username',
+              value: 'test'
+            }
+          ]
+        },
+        settings: {
+          url: '/settings',
+          method: 'get',
+          list: [
+            {
+              action: 'clear'
+            },
+            {
+              message: '<p>使用 get 请求接口时, 参数type为"default" 可获取默认配置信息, 不传则获取修改过的实时配置</p>\
+              <p>使用 post 请求接口时, 可以修改服务端的配置信息</p>\
+              '
+            },
+            {
+
+            }
+          ]
+        }
+      }
+      localStorage.setItem("prest", JSON.stringify(result))
+      prest = parser(result)      
+    })()
+
+    $("[data-type='login']").click()
   </script>
 </body>
+
 </html>

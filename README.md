@@ -3,14 +3,13 @@
 
 ## npm命令
 ``` npm
-
-  # 单独服务器模式
+  # 用于构建mock服务器
   npm run bundle
 
-  # 插件模式
+  # webpack 插件模式
   npm run build
 
-  # 打包并运行单独服务器模式
+  # 打包并运行mock服务器
   npm run mock
 ```
 
@@ -57,15 +56,15 @@ module.exports = {
 ### 目录结构
 |- public  <font color="green">demo文件夹</font>  
 |- src  <font color="green">源码文件夹</font>  
-|- -- auth.js  <font color="green">用户权限</font>  
-|- -- config.js  <font color="green">mock配置</font>  
-|- -- datas.js  <font color="green">返回数据</font>  
-|- -- index.js  <font color="green">插件模式入口</font>  
-|- -- localhost.js  <font color="green">单独服务器模式入口</font>  
-|- -- server.js  <font color="green">mock服务器实例</font>  
+|- -- auth.ts  <font color="green">用户权限</font>  
+|- -- config.ts  <font color="green">mock服务器的一些配置</font>  
+|- -- datas.ts  <font color="green">返回数据</font>  
+|- -- index.ts  <font color="green">插件模式入口</font>  
+|- -- localhost.ts  <font color="green">mock服务器模式入口</font>  
+|- -- server.ts  <font color="green">mock服务器实例</font>  
 |- db.json  <font color="green">json-server数据库</font>  
-|- index.js  <font color="green">rollup打包后的插件模式入口</font>  
-|- localhost.js  <font color="green">rollup打包后的单独服务器模式入口</font>  
+|- index.js  <font color="green">rollup打包后的插件入口</font>  
+|- localhost.js  <font color="green">rollup打包后的 mock服务器 入口</font>  
 |- package.json  
 |- rollup.config.js  <font color="green">rollup配置</font>  
 
@@ -92,22 +91,31 @@ mockData 属性, 存放客户端请求api时的返回数据, 以及对返回数�
   {
     // 请求地址
     url: {
+      // 默认除登录入口外的接口都需要鉴权, 但设置了public, 则表示当前接口不需要鉴权
+      public: true,
       /**
        * 对模拟返回的数据进行包装
        * @func
        * @param {string} method 请求方法
        * @param {object} params 请求参数
-       * @param {any} result 默认的返回结果
+       * @param {any} result 默认返回结果的副本
        * @desc 无返回值时, 则放弃修改
        */
-      format: function(method, params, result){}, 
-
-      // 处理错误, 返回值类型: 
-      // 参数同 format
-      error: function(method, params, result){
-        // 1. function(res, headConfig) - 通过方法来自定义报错信息
-        // 2. object - 作为报错信息
-        // 3. 其它 - 没有错误, 继续向下执行~
+      format: (method, params, result) => {}, 
+      /**
+       * 对模拟返回的数据进行包装
+       * @func
+       * @param {string} method 请求方法
+       * @param {object} params 请求参数
+       * @param {any} result 默认返回结果的副本
+       * @desc 返回值说明: 
+       * 1. function(res, headConfig) - 通过方法来自定义报错信息
+       * 2. object - 作为报错信息 
+       * 3. string - 作为报错信息内容 (使用默认的报错结构)
+       * 4. 其它 - 没有错误, 继续向下执行~
+       */
+      error: (method, params, result) => {
+        // 1
         return function(res, headConfig){
           res.writeHead(400, headConfig)
           res.end(JSON.stringify({
@@ -115,16 +123,32 @@ mockData 属性, 存放客户端请求api时的返回数据, 以及对返回数�
             message: '未知错误'
           }))
         }
+        // 2
+        return {
+          code: 400,
+          message: '未知错误'
+        }
+        // 3
+        return '未知错误'
       }, 
-
-      // 转发请求 配置参考 request 模块
-      relay: function(method, params, result){ return {} } || '...',
+      /**
+       * 转发请求
+       * @func
+       * @param {string} method 请求方法
+       * @param {object} params 请求参数
+       * @param {any} result 默认返回结果的副本
+       * @desc relay 可以是一个url字符串
+       * @returns 参数数组, 会通过 apply 传给 request 模块, 参数说明参考 request 模块, (预置了最后一个函数参数, 建议不要传这个参数)
+      */
+      relay: (method, params, result) => {
+        return ['url', {}, () => {}]
+      },
       // 请求方法, 返回数据
       // 返回数据可以使用 mockjs 来填充数据, 也可以直接写json
       get: {
         // ...
       },
-      // 如果在 db.json 中配置了当前url, 则post请求会被 json-server 拦截
+      // 如果在 db.json 中配置了当前url, 则post请求会被 json-server 拦截 (请求被拦截的优先级: 错误处理error > 转发请求relay > json-server)
       post: {
         // ...
       },

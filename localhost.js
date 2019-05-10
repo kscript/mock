@@ -156,13 +156,17 @@ var Server$1 = function (option) {
         '/api/*': '$1'
     }));
     server$1.use(function (req, res, next) {
-        var _a = getInfo(req, option, config.crossDomain), data = _a.data, method = _a.method, urlKey = _a.urlKey, params = _a.params, headConfig = _a.headConfig;
+        var _a = getInfo(req, option, config.crossDomain), url = _a.url, data = _a.data, method = _a.method, urlKey = _a.urlKey, params = _a.params, headConfig = _a.headConfig;
         var result = {};
         // 是否需要将接口的处理逻辑交由json-server
         var transfer = method === 'post' && router.db.__wrapped__.hasOwnProperty(urlKey);
         // 1. 验证用户请求的api地址是否有数据
         if (data || transfer) {
             data = data || {};
+            result = JSON.parse(JSON.stringify(data[method] || {}));
+            if (!(result instanceof Object)) {
+                result = {};
+            }
             // 2. 处理鉴权
             // 当前链接不是登录入口 && 启用了鉴权功能 && 当前api需要鉴权 && 用户未能通过鉴权
             if (urlKey !== option.loginUrl && option.bounded && !data.public && !auth.verify()) {
@@ -175,7 +179,7 @@ var Server$1 = function (option) {
             }
             // 3. 处理错误
             if (data.error && typeof data.error === 'function') {
-                var errResult = data.error(method, params, result);
+                var errResult = data.error(method, params, result, { url: url });
                 if (errResult) {
                     // 返回函数时, 可以在data.error得到两个参数res, headConfig, 方便进行自定义的错误输出
                     if (typeof errResult === 'function') {
@@ -199,14 +203,28 @@ var Server$1 = function (option) {
             }
             // 4. 处理转发请求
             if (data.relay) {
-                var relay = typeof data.relay === 'function' ? data.relay(method, params, data[method]) : data.relay;
-                request(relay, function (error, response, body) {
-                    if (!error && response.statusCode === 200) {
-                        res.writeHead(200, headConfig);
-                        res.send(body);
-                        // 如果是登录入口请求成功
-                        if (method === 'post' && urlKey === option.loginUrl) {
-                            auth.login(params);
+                var relay = typeof data.relay === 'function' ? data.relay(method, params, data[method], { url: url }) : data.relay;
+                if (!Array.isArray(relay)) {
+                    relay = [relay];
+                }
+                request.apply(request, relay.concat(function (error, response, body) {
+                    if (!error) {
+                        try {
+                            if (response.statusCode === 200) {
+                                res.writeHead(200, headConfig);
+                                res.end(JSON.stringify(body));
+                            }
+                            else {
+                                res.writeHead(response.statusCode, headConfig);
+                                res.end(JSON.stringify(body));
+                            }
+                            // 如果是登录入口请求成功
+                            if (method === 'post' && urlKey === option.loginUrl) {
+                                auth.login(params);
+                            }
+                        }
+                        catch (e) {
+                            console.log(e);
                         }
                     }
                     else {
@@ -216,7 +234,7 @@ var Server$1 = function (option) {
                             message: "请求失败"
                         }));
                     }
-                });
+                }));
                 return;
             }
             // 5. 验证请求方法是否存在
@@ -227,9 +245,8 @@ var Server$1 = function (option) {
                 }
                 // 如果存在当前的请求方法, 先根据配置进行处理, 再转交给 json-server
                 if (data[method]) {
-                    result = JSON.parse(JSON.stringify(data[method] || {}));
                     if (data.format) {
-                        result = data.format(method, params, result) || result;
+                        result = data.format(method, params, result, { url: url }) || result;
                     }
                 }
                 // 如果没有配置当前的请求方法, 则后续操作由json-server控制
@@ -258,11 +275,8 @@ var Server$1 = function (option) {
         res.end(JSON.stringify(result));
     });
     router.render = function (req, res) {
+        var _a = getInfo(req, option, config.crossDomain), method = _a.method, urlKey = _a.urlKey, params = _a.params;
         mockData = mockData || {};
-        var url = req._parsedUrl.pathname.replace(/^\//, '');
-        var urlKey = (url || '').replace(/\/$/, '').replace(/\//g, '_');
-        var params = Object.assign({}, req.body || {}, req.query);
-        var method = req.method.toLowerCase();
         var body = {
             code: 200,
             message: 'ok',
@@ -291,6 +305,12 @@ var Server$1 = function (option) {
     });
 };
 
+var config$1 = {
+    username: 'admin',
+    password: '123456',
+    retryUrl: 'http://localhost:3030/info'
+};
+var defaultConfig = Object.assign({}, config$1);
 var login = {
     // 转发
     relay: '',
@@ -299,28 +319,80 @@ var login = {
     },
     // 模拟请求出错
     error: function (method, params, result) {
+        if (params.username !== config$1.username || params.password !== config$1.password) {
+            return function (res, headConfig) {
+                res.writeHead(400, headConfig);
+                res.end(JSON.stringify({
+                    code: 400,
+                    message: '密码错误'
+                }));
+            };
+        }
     },
     // post方法的默认请求结果
     post: {}
 };
+var relay = {
+    relay: function (method, params, result) {
+        return {
+            url: config$1.retryUrl,
+            method: method,
+            form: params,
+            json: true
+        };
+    }
+};
 var info = {
     error: function (method, params, result) {
-        console.log(method, params, result);
         if (!params.username) {
             return '参数不足';
         }
     },
+    format: function (method, params, result) {
+        result.message = 'hello ' + (params.username || 'world');
+        // 不返回, 那么修改无效
+        return result;
+    },
+    get: {
+        code: 200,
+        message: 'ok',
+        data: {}
+    }
+};
+var settings = {
+    // 公开当前接口
+    public: true,
+    format: function (method, params, result) {
+        if (method === 'get') {
+            if (params.type === 'default') {
+                result.data = defaultConfig;
+            }
+            else {
+                result.data = config$1;
+            }
+        }
+        else if (method === 'post') {
+            Object.assign(config$1, params);
+            result.data = config$1;
+        }
+        return result;
+    },
+    get: {
+        code: 200,
+        message: 'ok',
+        data: {}
+    },
     post: {
         code: 200,
         message: 'ok',
-        data: {
-            text: "hello world"
-        }
+        data: {}
     }
 };
 var datas = {
+    info: info,
     login: login,
-    info: info
+    relay: relay,
+    settings: settings
 };
 
 Server$1({
