@@ -112,7 +112,9 @@ var request = require('request');
 var server$1 = jsonServer.create();
 // 路径从根目录开始?
 var router = jsonServer.router(path.resolve(__dirname, 'db.json'));
-var middlewares = jsonServer.defaults();
+var middlewares = jsonServer.defaults({
+    static: path.resolve(__dirname, './public')
+});
 server$1.use(middlewares);
 var getInfo = function (req, option, headers) {
     var url = req._parsedUrl.pathname.replace(/^\//, '');
@@ -293,6 +295,9 @@ var Server$1 = function (option) {
             Object.assign(body, {
                 message: '退出成功!'
             }, mockData[method]);
+        }
+        if (mockData[method] instanceof Object && typeof mockData[method].format == 'function') {
+            body = mockData[method].format(method, params, JSON.parse(JSON.stringify(body))) || body;
         }
         // post成功后, 对其返回数据进行包装
         res.status(201).jsonp(body);

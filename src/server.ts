@@ -7,7 +7,9 @@ const request = require('request');
 const server = jsonServer.create()
 // 路径从根目录开始?
 const router = jsonServer.router(path.resolve(__dirname, 'db.json'))
-const middlewares = jsonServer.defaults()
+const middlewares = jsonServer.defaults({
+    static: path.resolve(__dirname, './public')
+})
 
 server.use(middlewares)
 
@@ -209,6 +211,9 @@ const Server = option => {
             Object.assign(body, {
                 message: '退出成功!'
             }, mockData[method])
+        }
+        if (mockData[method] instanceof Object && typeof mockData[method].format == 'function') {
+            body = mockData[method].format(method, params, JSON.parse(JSON.stringify(body))) || body
         }
         // post成功后, 对其返回数据进行包装
         res.status(201).jsonp(body)
