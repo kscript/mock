@@ -1,20 +1,20 @@
 
-let config = {
+const config = {
     username: 'admin',
     password: '123456',
     retryUrl: 'http://localhost:3030/info'
 }
 const defaultConfig = Object.assign({}, config)
 
-export let login = {
+export const login: api = {
     // 转发
     relay: '',
     // 格式化请求结果
-    format: (method, params, result, { body }) => {
+    format (method, params, result, { body }) {
         return Object.assign(body || {}, result)
     },
     // 模拟请求出错
-    error: (method, params, result, { body }) => {
+    error (method, params, result, { body }) {
         if (params.username !== config.username || params.password !== config.password) {
             return (res, headConfig) => {
                 res.writeHead(400, headConfig)
@@ -30,7 +30,7 @@ export let login = {
         message: '登录成功!'
     }
 }
-export let logout = {
+export const logout: api = {
     format: (method, params, result, { body }) => {
         return Object.assign(body || {}, result)
     },
@@ -38,8 +38,8 @@ export let logout = {
         message: '退出成功!'
     }
 }
-export let relay = {
-    relay: (method, params, result) => {
+export const relay: api = {
+    relay (method, params, result) {
         return {
             url: config.retryUrl,
             method,
@@ -48,13 +48,13 @@ export let relay = {
         }
     }
 }
-export let info = {
-    error: (method, params, result) => {
+export const info: api = {
+    error(method, params, result) {
         if (!params.username) {
             return '参数不足'
         }
     },
-    format: (method, params, result) => {
+    format(method, params, result) {
         result.message = 'hello ' + (params.username || 'world')
         // 不返回, 那么修改无效
         return result
@@ -65,10 +65,10 @@ export let info = {
         data: {}
     }
 }
-export let settings = {
+export const settings: api = {
     // 公开当前接口
     public: true,
-    format: (method, params, result) => {
+    format(method, params, result) {
         if (method === 'get') {
             if (params.type === 'default') {
                 result.data = defaultConfig

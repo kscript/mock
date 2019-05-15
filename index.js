@@ -44,15 +44,18 @@ var Base = /** @class */ (function () {
     };
     Base.prototype.set = function (key, val) {
         this.data[key] = val;
+        return this;
     };
     Base.prototype.reset = function (obj) {
         this.clear();
         Object.assign(this.data, obj);
+        return this;
     };
     Base.prototype.clear = function () {
         for (var key in this.data) {
             delete this.data[key];
         }
+        return this;
     };
     return Base;
 }());
@@ -84,23 +87,40 @@ var config = {
     crossDomain: crossDomain
 };
 
+/**
+ * 用户权限管理
+ */
 var Auth = /** @class */ (function () {
     function Auth() {
     }
+    /**
+     * 获取属性值
+     * @param key 属性
+     */
     Auth.prototype.get = function (key) {
         if (typeof key === 'string') {
             return user.get('key');
         }
         return JSON.parse(JSON.stringify(user.get()));
     };
+    /**
+     * 登录
+     * @param data 登录时携带的信息
+     */
     Auth.prototype.login = function (data) {
         user.reset(data);
         server.set('login', true);
     };
+    /**
+     * 退出登录
+     */
     Auth.prototype.logout = function () {
         user.clear();
         server.set('login', false);
     };
+    /**
+     * 验证是否登录
+     */
     Auth.prototype.verify = function () {
         return server.get('login');
     };
@@ -328,6 +348,10 @@ var Server$1 = function (option) {
     });
 };
 
+/**
+ * mock实例
+ * @param option 配置
+ */
 function KsMock(option) {
     this.option = option;
 }

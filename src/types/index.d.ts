@@ -1,6 +1,9 @@
-export interface stringObject {
-    [propName: string]: string
+interface anyObject {
+    [prop: string]: any
 }
-export interface functionObject {
-    [propName: string]: Function
+interface stringObject {
+    [prop: string]: string
+}
+interface functionObject {
+    [prop: string]: Function
 }

@@ -1,5 +1,8 @@
 import server from './server.js'
-
+/**
+ * mock实例
+ * @param option 配置
+ */
 function KsMock(option) {
     this.option = option
 }

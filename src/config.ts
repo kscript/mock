@@ -1,19 +1,22 @@
 class Base {
-    data = {}
-    get(key?: string) {
+    data: anyObject = {}
+    get(key?: string): any {
         return key ? this.data[key] : this.data
     }
-    set(key: string, val: any) {
+    set(key: string, val: any): Base {
         this.data[key] = val
+        return this
     }
-    reset(obj: Object) {
+    reset(obj: anyObject): Base {
         this.clear()
         Object.assign(this.data, obj)
+        return this
     }
-    clear() {
+    clear(): Base {
         for (let key in this.data) {
             delete this.data[key]
         }
+        return this
     }
 }
 class Server extends Base {
