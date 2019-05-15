@@ -1,8 +1,9 @@
-import Mock from 'mockjs';
 import * as path from 'path';
 import jsonServer from 'json-server';
-import auth from './auth.js';
-import config from './config.js';
+import auth from './auth';
+import config from './config';
+import rules from './rules';
+import { getInfo, mockResult, Http } from './utils'
 const request = require('request');
 const server = jsonServer.create()
 // 路径从根目录开始?
@@ -12,28 +13,6 @@ const middlewares = jsonServer.defaults({
 })
 
 server.use(middlewares)
-
-const getInfo = (req, option, headers) => {
-    let url = req._parsedUrl.pathname.replace(/^\//, '')
-    return {
-        url,
-        data: option.mockData[url],
-        method: req.method.toLowerCase(),
-        urlKey: (url || '').replace(/\/$/, '').replace(/\//g, '_'),
-        params: Object.assign({}, req.body || {}, req.query),
-        headConfig: Object.assign(
-            Object.assign(
-                {
-                    // 中文乱码
-                    'Content-Type': 'text/html; charset=utf-8'
-                },
-                // 是否跨域
-                option.crossDomain ? headers : {}
-            ),
-            option.headConfig
-        )
-    }
-}
 
 /**
  * 启动mock服务
@@ -60,12 +39,11 @@ const Server = option => {
 
     // 路由映射
     server.use(
-        jsonServer.rewriter({
-            '/api/*': '$1'
-        })
+        jsonServer.rewriter(option.rules instanceof Object ? option.rules : rules)
     )
 
     server.use((req, res, next) => {
+        const http = new Http(res)
         let {
             url,
             data,
@@ -87,13 +65,13 @@ const Server = option => {
             }
             // 2. 处理鉴权
             // 当前链接不是登录入口 && 启用了鉴权功能 && 当前api需要鉴权 && 用户未能通过鉴权
-            if(urlKey !== option.loginUrl && option.bounded && !data.public && !auth.verify()) {
-                res.writeHead(401, headConfig)
-                res.end(JSON.stringify({
+            if (urlKey !== option.loginUrl && option.bounded && !data.public && !auth.verify()) {
+                http.writeHead(401, headConfig)
+                http.end({
                     code: 401,
                     message: urlKey && urlKey === option.logoutUrl ? '退出失败' : '权限不足, 请先登录'
-                }))
-                return 
+                })
+                return
             }
             // 3. 处理错误
             if (data.error && typeof data.error === 'function') {
@@ -101,18 +79,18 @@ const Server = option => {
                 if (errResult) {
                     // 返回函数时, 可以在data.error得到两个参数res, headConfig, 方便进行自定义的错误输出
                     if (typeof errResult === 'function') {
-                        errResult(res, headConfig)
-                    // 返回对象时, 将其作为错误信息输出
+                        errResult(http, headConfig)
+                        // 返回对象时, 将其作为错误信息输出
                     } else if (typeof errResult === 'object') {
-                        res.writeHead(400, headConfig)
-                        res.end(JSON.stringify(errResult))
-                    // 输出默认错误信息
+                        http.writeHead(400, headConfig)
+                        http.end(errResult)
+                        // 输出默认错误信息
                     } else {
-                        res.writeHead(400, headConfig)
-                        res.end(JSON.stringify({
+                        http.writeHead(400, headConfig)
+                        http.end({
                             code: 400,
                             message: typeof errResult === 'string' ? errResult : '请求出错'
-                        }))
+                        })
                     }
                     return
                 }
@@ -120,32 +98,32 @@ const Server = option => {
             // 4. 处理转发请求
             if (data.relay) {
                 let relay = typeof data.relay === 'function' ? data.relay(method, params, data[method], { url }) : data.relay
-                if (!Array.isArray(relay)){
+                if (!Array.isArray(relay)) {
                     relay = [relay]
                 }
                 request.apply(request, relay.concat((error, response, body) => {
                     if (!error) {
-                        try{
+                        try {
                             if (response.statusCode === 200) {
-                                res.writeHead(200, headConfig)
-                                res.end(JSON.stringify(body))
+                                http.writeHead(200, headConfig)
+                                http.end(body)
                             } else {
-                                res.writeHead(response.statusCode, headConfig)
-                                res.end(JSON.stringify(body))
+                                http.writeHead(response.statusCode, headConfig)
+                                http.end(body)
                             }
                             // 如果是登录入口请求成功
                             if (method === 'post' && urlKey === option.loginUrl) {
                                 auth.login(params)
                             }
-                        } catch(e) {
+                        } catch (e) {
                             console.log(e)
                         }
                     } else {
-                        res.writeHead(400, headConfig)
-                        res.end(JSON.stringify({
+                        http.writeHead(400, headConfig)
+                        http.end({
                             code: 400,
                             message: "请求失败"
-                        }))
+                        })
                     }
                 }))
                 return
@@ -165,25 +143,24 @@ const Server = option => {
                 // 如果没有配置当前的请求方法, 则后续操作由json-server控制
                 if (transfer) {
                     next()
-                    return 
+                    return
                 }
-                res.writeHead(200, headConfig)
-                result = Mock.mock(result)
+                http.writeHead(200, headConfig)
             } else {
-                res.writeHead(405, headConfig)
+                http.writeHead(405, headConfig)
                 result = {
                     code: 405,
                     message: '请求方法错误'
                 }
             }
         } else {
-            res.writeHead(404, headConfig)
+            http.writeHead(404, headConfig)
             result = {
                 code: 404,
                 message: '请求地址不存在'
             }
         }
-        res.end(JSON.stringify(result))
+        http.end(result)
     })
 
     router.render = (req, res) => {
@@ -201,22 +178,25 @@ const Server = option => {
             message: 'ok',
             data: res.locals.data
         }
+        let current = mockData[urlKey]
         if (urlKey === option.loginUrl) {
             auth.login(params)
-            Object.assign(body, {
-                message: '登录成功!'
-            }, mockData[method])
         } else if (urlKey === option.logoutUrl) {
             auth.logout()
-            Object.assign(body, {
-                message: '退出成功!'
-            }, mockData[method])
         }
-        if (mockData[method] instanceof Object && typeof mockData[method].format == 'function') {
-            body = mockData[method].format(method, params, JSON.parse(JSON.stringify(body))) || body
+        if (current && typeof current.format === 'function') {
+            body = mockResult(current.format(
+                method,
+                params,
+                JSON.parse(JSON.stringify(current[method] instanceof Object ? current[method] : {})),
+                {
+                    url,
+                    body: JSON.parse(JSON.stringify(body))
+                }
+            ) || body)
         }
         // post成功后, 对其返回数据进行包装
-        res.status(201).jsonp(body)
+        res.status(200).jsonp(body)
     }
     server.use(router)
     server.listen(option.port, () => {

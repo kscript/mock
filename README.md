@@ -1,5 +1,5 @@
 ## ks-mock
-一个mock服务端api的工具, 从 1.1.3 版本起, 除模拟请求api接口数据外, 还提供了触发 鉴权、请求错误 机制的功能
+一个mock服务端api的工具, 除模拟请求api接口数据外, 还提供了 触发鉴权、模拟请求错误、转发请求 的功能
 
 ## npm命令
 ``` npm
@@ -30,7 +30,47 @@
 项目运行后, 打开首页(http://localhost:3030) 可查看demo
 
 
-### 2. 作为webpack 插件使用
+### 2. 在项目中使用
+- 安装
+```npm
+  npm i ks-mock -D
+```
+- 添加 mock 文件夹, 参照如下示例, 添加入口文件 index.js 和处理用于处理返回数据的文件 datas.js
+
+
+```javascript
+// index.js
+const KsMock = require("ks-mock");
+const datas = require('./datas.js');
+new KsMock({
+    mockData: datas,
+    headConfig: null,
+    crossDomain: true,
+    port: 3030,
+    loginUrl: 'login'
+}).server();
+```
+```javascript
+// datas.js
+module.exports = {
+    login: {
+        format: (method, params, result, { body }) => {
+            Object.assign(result.data, params);
+            return result
+        },
+        post: {
+          message: "登录成功!"
+        }
+    },
+};
+```
+
+- 在 package.json 添加命令
+```
+"mock": "node mock"
+```
+
+### 3. 作为 webpack 插件使用
 安装
 ```npm
   npm i ks-mock -D
@@ -44,8 +84,8 @@ module.exports = {
   plugins: [
     new KsMock({
       mockData: {}, 
-      headConfig: null, // 服务器请求头设置
-      crossDomain: true, // 是否允许跨域 当 headConfig 不为空时忽略该项
+      headConfig: null,
+      crossDomain: true,
       port: 3030
     })
     ...
@@ -61,8 +101,10 @@ module.exports = {
 |- -- datas.ts  <font color="green">返回数据</font>  
 |- -- index.ts  <font color="green">插件模式入口</font>  
 |- -- localhost.ts  <font color="green">mock服务器模式入口</font>  
+|- -- rules.ts  <font color="green">路由重写规则</font>  
 |- -- server.ts  <font color="green">mock服务器实例</font>  
-|- db.json  <font color="green">json-server数据库</font>  
+|- -- utils.ts  <font color="green">一些用到的方法</font>  
+|- db.json  <font color="green">json-server数据库(在其它项目中使用时, 会在process.cwd()目录生成)</font>  
 |- index.js  <font color="green">rollup打包后的插件入口</font>  
 |- localhost.js  <font color="green">rollup打包后的 mock服务器 入口</font>  
 |- package.json  
@@ -76,6 +118,7 @@ module.exports = {
 | headConfig | object | null | 服务器请求头设置 |
 | crossDomain | boolean | true | 是否允许跨域 当 headConfig 不为空时, 忽略该项 |
 | port | number | 3030 | 端口号 |
+| rules | object | - | 路由重写规则 |
 | loginUrl | string | - | 登录地址, 如果配置了loginUrl, 那么除登录和public属性为true的接口外, 其它接口必须在登录之后才可以正常执行 |
 | logoutUrl | string | - | 退出登录地址 |
 
@@ -85,7 +128,7 @@ mockData 属性, 存放客户端请求api时的返回数据, 以及对返回数�
 2. 返回错误信息
 3. 转发请求
 
-返回数据支持 mock.js 中的写法, [查看 mock.js 使用文档](https://github.com/nuysoft/Mock/wiki), 但如果进入2和3操作时, 那么 mock.js 写法无效
+返回数据支持 mock.js 中的写法, [查看 mock.js 使用文档](https://github.com/nuysoft/Mock/wiki), 但如果是被 鉴权/错误处理/转发请求 拦截, 那么 mock.js 写法无效
 
 ``` js
   {

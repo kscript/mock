@@ -2,9 +2,9 @@
 
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 
-var Mock = _interopDefault(require('mockjs'));
 var path = require('path');
 var jsonServer = _interopDefault(require('json-server'));
+var Mock = _interopDefault(require('mockjs'));
 
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation. All rights reserved.
@@ -108,14 +108,11 @@ var Auth = /** @class */ (function () {
 }());
 var auth = new Auth;
 
-var request = require('request');
-var server$1 = jsonServer.create();
-// 路径从根目录开始?
-var router = jsonServer.router(path.resolve(process.cwd(), 'db.json'));
-var middlewares = jsonServer.defaults({
-    static: path.resolve(__dirname, './public')
-});
-server$1.use(middlewares);
+// 路由重写规则
+var rules = {
+    '/api/*': '$1'
+};
+
 var getInfo = function (req, option, headers) {
     var url = req._parsedUrl.pathname.replace(/^\//, '');
     return {
@@ -132,6 +129,31 @@ var getInfo = function (req, option, headers) {
         option.crossDomain ? headers : {}), option.headConfig)
     };
 };
+var mockResult = function (result) {
+    return result instanceof Object ? Mock.mock(result) : result;
+};
+var Http = /** @class */ (function () {
+    function Http(res) {
+        this.res = null;
+        this.res = res;
+    }
+    Http.prototype.writeHead = function (code, header) {
+        this.res.writeHead(code, header);
+    };
+    Http.prototype.end = function (body) {
+        this.res.end(typeof body === 'string' ? body : JSON.stringify(mockResult(body)));
+    };
+    return Http;
+}());
+
+var request = require('request');
+var server$1 = jsonServer.create();
+// 路径从根目录开始?
+var router = jsonServer.router(path.resolve(process.cwd(), 'db.json'));
+var middlewares = jsonServer.defaults({
+    static: path.resolve(__dirname, './public')
+});
+server$1.use(middlewares);
 /**
  * 启动mock服务
  * @func
@@ -154,10 +176,9 @@ var Server$1 = function (option) {
     // You can use the one used by JSON Server
     server$1.use(jsonServer.bodyParser);
     // 路由映射
-    server$1.use(jsonServer.rewriter({
-        '/api/*': '$1'
-    }));
+    server$1.use(jsonServer.rewriter(option.rules instanceof Object ? option.rules : rules));
     server$1.use(function (req, res, next) {
+        var http = new Http(res);
         var _a = getInfo(req, option, config.crossDomain), url = _a.url, data = _a.data, method = _a.method, urlKey = _a.urlKey, params = _a.params, headConfig = _a.headConfig;
         var result = {};
         // 是否需要将接口的处理逻辑交由json-server
@@ -172,11 +193,11 @@ var Server$1 = function (option) {
             // 2. 处理鉴权
             // 当前链接不是登录入口 && 启用了鉴权功能 && 当前api需要鉴权 && 用户未能通过鉴权
             if (urlKey !== option.loginUrl && option.bounded && !data.public && !auth.verify()) {
-                res.writeHead(401, headConfig);
-                res.end(JSON.stringify({
+                http.writeHead(401, headConfig);
+                http.end({
                     code: 401,
                     message: urlKey && urlKey === option.logoutUrl ? '退出失败' : '权限不足, 请先登录'
-                }));
+                });
                 return;
             }
             // 3. 处理错误
@@ -185,20 +206,20 @@ var Server$1 = function (option) {
                 if (errResult) {
                     // 返回函数时, 可以在data.error得到两个参数res, headConfig, 方便进行自定义的错误输出
                     if (typeof errResult === 'function') {
-                        errResult(res, headConfig);
+                        errResult(http, headConfig);
                         // 返回对象时, 将其作为错误信息输出
                     }
                     else if (typeof errResult === 'object') {
-                        res.writeHead(400, headConfig);
-                        res.end(JSON.stringify(errResult));
+                        http.writeHead(400, headConfig);
+                        http.end(errResult);
                         // 输出默认错误信息
                     }
                     else {
-                        res.writeHead(400, headConfig);
-                        res.end(JSON.stringify({
+                        http.writeHead(400, headConfig);
+                        http.end({
                             code: 400,
                             message: typeof errResult === 'string' ? errResult : '请求出错'
-                        }));
+                        });
                     }
                     return;
                 }
@@ -213,12 +234,12 @@ var Server$1 = function (option) {
                     if (!error) {
                         try {
                             if (response.statusCode === 200) {
-                                res.writeHead(200, headConfig);
-                                res.end(JSON.stringify(body));
+                                http.writeHead(200, headConfig);
+                                http.end(body);
                             }
                             else {
-                                res.writeHead(response.statusCode, headConfig);
-                                res.end(JSON.stringify(body));
+                                http.writeHead(response.statusCode, headConfig);
+                                http.end(body);
                             }
                             // 如果是登录入口请求成功
                             if (method === 'post' && urlKey === option.loginUrl) {
@@ -230,11 +251,11 @@ var Server$1 = function (option) {
                         }
                     }
                     else {
-                        res.writeHead(400, headConfig);
-                        res.end(JSON.stringify({
+                        http.writeHead(400, headConfig);
+                        http.end({
                             code: 400,
                             message: "请求失败"
-                        }));
+                        });
                     }
                 }));
                 return;
@@ -256,11 +277,10 @@ var Server$1 = function (option) {
                     next();
                     return;
                 }
-                res.writeHead(200, headConfig);
-                result = Mock.mock(result);
+                http.writeHead(200, headConfig);
             }
             else {
-                res.writeHead(405, headConfig);
+                http.writeHead(405, headConfig);
                 result = {
                     code: 405,
                     message: '请求方法错误'
@@ -268,39 +288,37 @@ var Server$1 = function (option) {
             }
         }
         else {
-            res.writeHead(404, headConfig);
+            http.writeHead(404, headConfig);
             result = {
                 code: 404,
                 message: '请求地址不存在'
             };
         }
-        res.end(JSON.stringify(result));
+        http.end(result);
     });
     router.render = function (req, res) {
-        var _a = getInfo(req, option, config.crossDomain), method = _a.method, urlKey = _a.urlKey, params = _a.params;
+        var _a = getInfo(req, option, config.crossDomain), url = _a.url, method = _a.method, urlKey = _a.urlKey, params = _a.params;
         mockData = mockData || {};
         var body = {
             code: 200,
             message: 'ok',
             data: res.locals.data
         };
+        var current = mockData[urlKey];
         if (urlKey === option.loginUrl) {
             auth.login(params);
-            Object.assign(body, {
-                message: '登录成功!'
-            }, mockData[method]);
         }
         else if (urlKey === option.logoutUrl) {
             auth.logout();
-            Object.assign(body, {
-                message: '退出成功!'
-            }, mockData[method]);
         }
-        if (mockData[method] instanceof Object && typeof mockData[method].format == 'function') {
-            body = mockData[method].format(method, params, JSON.parse(JSON.stringify(body))) || body;
+        if (current && typeof current.format === 'function') {
+            body = mockResult(current.format(method, params, JSON.parse(JSON.stringify(current[method] instanceof Object ? current[method] : {})), {
+                url: url,
+                body: JSON.parse(JSON.stringify(body))
+            }) || body);
         }
         // post成功后, 对其返回数据进行包装
-        res.status(201).jsonp(body);
+        res.status(200).jsonp(body);
     };
     server$1.use(router);
     server$1.listen(option.port, function () {
@@ -318,6 +336,9 @@ KsMock.prototype.apply = function (compiler) {
     compiler.plugin("emit", function (compilation, callback) {
         callback();
     });
+};
+KsMock.prototype.server = function (option) {
+    Server$1(option || this.option);
 };
 
 module.exports = KsMock;

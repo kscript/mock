@@ -10,10 +10,11 @@ export let login = {
     // 转发
     relay: '',
     // 格式化请求结果
-    format: (method, params, result) => {
+    format: (method, params, result, { body }) => {
+        return Object.assign(body || {}, result)
     },
     // 模拟请求出错
-    error: (method, params, result) => {
+    error: (method, params, result, { body }) => {
         if (params.username !== config.username || params.password !== config.password) {
             return (res, headConfig) => {
                 res.writeHead(400, headConfig)
@@ -26,6 +27,15 @@ export let login = {
     },
     // post方法的默认请求结果
     post: {
+        message: '登录成功!'
+    }
+}
+export let logout = {
+    format: (method, params, result, { body }) => {
+        return Object.assign(body || {}, result)
+    },
+    post: {
+        message: '退出成功!'
     }
 }
 export let relay = {
@@ -85,6 +95,7 @@ export let settings = {
 export default {
     info,
     login,
+    logout,
     relay,
     settings
 }

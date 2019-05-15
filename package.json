@@ -1,10 +1,11 @@
 {
   "name": "ks-mock",
-  "version": "1.1.8",
+  "version": "1.1.10",
   "description": "mock server 模拟后端API接口",
   "main": "index.js",
   "scripts": {
     "mock": "npm run bundle && node localhost",
+    "publish": "npm run bundle && npm run build",
     "bundle": "rollup -c -i ./src/localhost.ts -o localhost.js",
     "build": "rollup -c -i ./src/index.ts -o index.js"
   },

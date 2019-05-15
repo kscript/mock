@@ -11,7 +11,7 @@ class Base {
         Object.assign(this.data, obj)
     }
     clear() {
-        for(let key in this.data) {
+        for (let key in this.data) {
             delete this.data[key]
         }
     }
