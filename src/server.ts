@@ -6,7 +6,7 @@ import config from './config.js';
 const request = require('request');
 const server = jsonServer.create()
 // 路径从根目录开始?
-const router = jsonServer.router(path.resolve(__dirname, 'db.json'))
+const router = jsonServer.router(path.resolve(process.cwd(), 'db.json'))
 const middlewares = jsonServer.defaults({
     static: path.resolve(__dirname, './public')
 })

@@ -111,7 +111,7 @@ var auth = new Auth;
 var request = require('request');
 var server$1 = jsonServer.create();
 // 路径从根目录开始?
-var router = jsonServer.router(path.resolve(__dirname, 'db.json'));
+var router = jsonServer.router(path.resolve(process.cwd(), 'db.json'));
 var middlewares = jsonServer.defaults({
     static: path.resolve(__dirname, './public')
 });
