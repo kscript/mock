@@ -286,14 +286,17 @@ var Server$1 = function (option) {
                 if (urlKey === option.loginUrl) {
                     auth.login(params);
                 }
-                // 如果存在当前的请求方法, 先根据配置进行处理, 再转交给 json-server
-                if (data[method]) {
-                    if (data.format) {
-                        result = data.format(method, params, result, { url: url }) || result;
-                    }
+                // 如果存在当前的请求方法, 先根据配置进行处理, 再判断是否需要转交给 json-server
+                var formatResult = data[method] && data.format ? data.format(method, params, result, { url: url }) : undefined;
+                if (typeof formatResult === 'function') {
+                    formatResult(next);
+                    return;
                 }
-                // 如果没有配置当前的请求方法, 则后续操作由json-server控制
-                if (transfer) {
+                else if (typeof formatResult !== 'undefined') {
+                    result = formatResult;
+                }
+                else if (transfer) {
+                    // 如果没有配置当前的请求方法, 则后续操作由json-server控制
                     next();
                     return;
                 }
@@ -455,6 +458,7 @@ var datas = {
 
 Server$1({
     mockData: datas,
+    port: 3031,
     loginUrl: 'login',
     logoutUrl: 'logout'
 });

@@ -1,12 +1,11 @@
 // export declare namespace datas {
+interface anyObject {
+    [prop: string]: any;
+}
 type apiFunc = (
     method: string,
-    params: {
-        [prop: string]: any;
-    },
-    result: {
-        [prop: string]: any;
-    },
+    params: anyObject,
+    result: anyObject,
     rest?: {
         url: string;
         body: object;
@@ -16,12 +15,8 @@ type apiFunc = (
 
 type apiErrorFunc = (
     method: string,
-    params: {
-        [prop: string]: any;
-    },
-    result: {
-        [prop: string]: any;
-    },
+    params: anyObject,
+    result: anyObject,
     rest?: {
         url: string;
         body: object;
@@ -34,12 +29,8 @@ interface api {
     relay?: string | apiFunc;
     format?: apiFunc;
     error?: apiErrorFunc;
-    post?: {
-        [prop: string]: any;
-    };
-    get?: {
-        [prop: string]: any;
-    };
+    post?: anyObject;
+    get?: anyObject;
     [prop: string]: any;
 }
 

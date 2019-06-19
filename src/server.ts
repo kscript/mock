@@ -32,7 +32,6 @@ const Server = option => {
         bounded: !!option.loginUrl
     }, option)
     let mockData = option.mockData
-
     // To handle POST, PUT and PATCH you need to use a body-parser
     // You can use the one used by JSON Server
     server.use(jsonServer.bodyParser)
@@ -41,7 +40,6 @@ const Server = option => {
     server.use(
         jsonServer.rewriter(option.rules instanceof Object ? option.rules : rules)
     )
-
     server.use((req, res, next) => {
         const http = new Http(res)
         let {
@@ -134,14 +132,12 @@ const Server = option => {
                 if (urlKey === option.loginUrl) {
                     auth.login(params)
                 }
-                // 如果存在当前的请求方法, 先根据配置进行处理, 再转交给 json-server
-                if (data[method]) {
-                    if (data.format) {
-                        result = data.format(method, params, result, { url }) || result
-                    }
-                }
-                // 如果没有配置当前的请求方法, 则后续操作由json-server控制
-                if (transfer) {
+                // 如果存在当前的请求方法, 先根据配置进行处理, 再判断是否需要转交给 json-server
+                let formatResult = data[method] && data.format ? data.format(method, params, result, { url }) : undefined;
+                if (formatResult) {
+                    result = formatResult;
+                } else if (transfer) {
+                    // 如果没有配置当前的请求方法, 则后续操作由json-server控制
                     next()
                     return
                 }
