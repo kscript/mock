@@ -3,6 +3,7 @@ import jsonServer from 'json-server';
 import auth from './auth';
 import config from './config';
 import rules from './rules';
+import * as https from 'https';
 import { getInfo, mockResult, Http } from './utils'
 const request = require('request');
 const server = jsonServer.create()
@@ -13,7 +14,22 @@ const middlewares = jsonServer.defaults({
 })
 
 server.use(middlewares)
-
+const createServer = (option: anyObject) => {
+    let config = option.https;
+    if(config instanceof Object && config.key && config.cert) {
+        https.createServer(config, server).listen(option.port, function() {
+            console.log()
+            console.log(`已启动json-server服务器 https://localhost:${option.port}`)
+            console.log()
+        });
+    } else {
+        server.listen(option.port, () => {
+            console.log()
+            console.log(`已启动json-server服务器 http://localhost:${option.port}`)
+            console.log()
+        })
+    }
+}
 /**
  * 启动mock服务
  * @func
@@ -195,10 +211,6 @@ const Server = option => {
         res.status(200).jsonp(body)
     }
     server.use(router)
-    server.listen(option.port, () => {
-        console.log()
-        console.log(`已启动json-server服务器 http://localhost:${option.port}`)
-        console.log()
-    })
+    createServer(option);
 }
 export default Server

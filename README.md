@@ -1,5 +1,5 @@
 ## ks-mock
-一个mock服务端api的工具, 除模拟请求api接口数据外, 还提供了 触发鉴权、模拟请求错误、转发请求 的功能
+一个mock服务端api的工具, 除模拟请求api接口数据外, 还提供了 https、触发鉴权、模拟请求错误、转发请求 的功能
 
 ## npm命令
 ``` npm
@@ -47,7 +47,11 @@ new KsMock({
     headConfig: null,
     crossDomain: true,
     port: 3030,
-    loginUrl: 'login'
+    loginUrl: 'login',
+    https: {
+      key: '',
+      cert: ''
+    }
 }).server();
 ```
 ```javascript
@@ -104,6 +108,7 @@ module.exports = {
 |- -- rules.ts  <font color="green">路由重写规则</font>  
 |- -- server.ts  <font color="green">mock服务器实例</font>  
 |- -- utils.ts  <font color="green">一些用到的方法</font>  
+|- ssl  <font color="green">SSL证书</font>  
 |- db.json  <font color="green">json-server数据库(在其它项目中使用时, 会在process.cwd()目录生成)</font>  
 |- index.js  <font color="green">rollup打包后的插件入口</font>  
 |- localhost.js  <font color="green">rollup打包后的 mock服务器 入口</font>  

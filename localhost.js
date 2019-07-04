@@ -4,7 +4,9 @@ function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'defau
 
 var path = require('path');
 var jsonServer = _interopDefault(require('json-server'));
+var https = require('https');
 var Mock = _interopDefault(require('mockjs'));
+var fs = require('fs');
 
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation. All rights reserved.
@@ -174,6 +176,23 @@ var middlewares = jsonServer.defaults({
     static: path.resolve(__dirname, './public')
 });
 server$1.use(middlewares);
+var createServer = function (option) {
+    var config = option.https;
+    if (config instanceof Object && config.key && config.cert) {
+        https.createServer(config, server$1).listen(option.port, function () {
+            console.log();
+            console.log("\u5DF2\u542F\u52A8json-server\u670D\u52A1\u5668 https://localhost:" + option.port);
+            console.log();
+        });
+    }
+    else {
+        server$1.listen(option.port, function () {
+            console.log();
+            console.log("\u5DF2\u542F\u52A8json-server\u670D\u52A1\u5668 http://localhost:" + option.port);
+            console.log();
+        });
+    }
+};
 /**
  * 启动mock服务
  * @func
@@ -288,11 +307,7 @@ var Server$1 = function (option) {
                 }
                 // 如果存在当前的请求方法, 先根据配置进行处理, 再判断是否需要转交给 json-server
                 var formatResult = data[method] && data.format ? data.format(method, params, result, { url: url }) : undefined;
-                if (typeof formatResult === 'function') {
-                    formatResult(next);
-                    return;
-                }
-                else if (typeof formatResult !== 'undefined') {
+                if (formatResult) {
                     result = formatResult;
                 }
                 else if (transfer) {
@@ -344,11 +359,7 @@ var Server$1 = function (option) {
         res.status(200).jsonp(body);
     };
     server$1.use(router);
-    server$1.listen(option.port, function () {
-        console.log();
-        console.log("\u5DF2\u542F\u52A8json-server\u670D\u52A1\u5668 http://localhost:" + option.port);
-        console.log();
-    });
+    createServer(option);
 };
 
 var config$1 = {
@@ -458,7 +469,11 @@ var datas = {
 
 Server$1({
     mockData: datas,
-    port: 3031,
+    port: 3030,
     loginUrl: 'login',
-    logoutUrl: 'logout'
+    logoutUrl: 'logout',
+    https: {
+        key: fs.readFileSync('ssl/key.pem'),
+        cert: fs.readFileSync('ssl/cert.pem')
+    }
 });
