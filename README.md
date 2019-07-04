@@ -123,6 +123,7 @@ module.exports = {
 | headConfig | object | null | 服务器请求头设置 |
 | crossDomain | boolean | true | 是否允许跨域 当 headConfig 不为空时, 忽略该项 |
 | port | number | 3030 | 端口号 |
+| https | object/undefined | undefined | https配置 |
 | rules | object | - | 路由重写规则, 参考 [json-server rewriter](https://github.com/typicode/json-server#rewriter-example) |
 | loginUrl | string | - | 登录地址, 如果配置了loginUrl, 那么除登录和public属性为true的接口外, 其它接口必须在登录之后才可以正常执行 |
 | logoutUrl | string | - | 退出登录地址 |

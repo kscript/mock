@@ -178,7 +178,12 @@ var middlewares = jsonServer.defaults({
 server$1.use(middlewares);
 var createServer = function (option) {
     var config = option.https;
-    if (config instanceof Object && config.key && config.cert) {
+    if (config instanceof Object) {
+        if (typeof config.key !== 'string' || typeof config.cert !== 'string' || config.key.length + config.cert.length === 0) {
+            config.key = fs.readFileSync(path.join(__dirname, 'ssl/key.pem'));
+            config.cert = fs.readFileSync(path.join(__dirname, 'ssl/cert.pem'));
+            console.log("正在使用默认的证书配置");
+        }
         https.createServer(config, server$1).listen(option.port, function () {
             console.log();
             console.log("\u5DF2\u542F\u52A8json-server\u670D\u52A1\u5668 https://localhost:" + option.port);
@@ -473,7 +478,7 @@ Server$1({
     loginUrl: 'login',
     logoutUrl: 'logout',
     https: {
-        key: fs.readFileSync('ssl/key.pem'),
-        cert: fs.readFileSync('ssl/cert.pem')
+    // key: fs.readFileSync('ssl/key.pem'),
+    // cert: fs.readFileSync('ssl/cert.pem')
     }
 });

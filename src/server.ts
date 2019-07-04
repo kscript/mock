@@ -5,6 +5,7 @@ import config from './config';
 import rules from './rules';
 import * as https from 'https';
 import { getInfo, mockResult, Http } from './utils'
+import * as  fs from 'fs';
 const request = require('request');
 const server = jsonServer.create()
 // 路径从根目录开始?
@@ -15,13 +16,18 @@ const middlewares = jsonServer.defaults({
 
 server.use(middlewares)
 const createServer = (option: anyObject) => {
-    let config = option.https;
-    if(config instanceof Object && config.key && config.cert) {
+    let config = option.https
+    if(config instanceof Object) {
+        if (typeof config.key !== 'string' || typeof config.cert !== 'string' || config.key.length + config.cert.length === 0){
+            config.key = fs.readFileSync(path.join(__dirname,'ssl/key.pem'))
+            config.cert = fs.readFileSync(path.join(__dirname,'ssl/cert.pem'))
+            console.log("正在使用默认的证书配置")
+        }
         https.createServer(config, server).listen(option.port, function() {
             console.log()
             console.log(`已启动json-server服务器 https://localhost:${option.port}`)
             console.log()
-        });
+        })
     } else {
         server.listen(option.port, () => {
             console.log()

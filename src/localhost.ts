@@ -8,7 +8,7 @@ server({
   loginUrl: 'login',
   logoutUrl: 'logout',
   https: {
-    key: fs.readFileSync('ssl/key.pem'),
-    cert: fs.readFileSync('ssl/cert.pem')
+    // key: fs.readFileSync('ssl/key.pem'),
+    // cert: fs.readFileSync('ssl/cert.pem')
   }
 })

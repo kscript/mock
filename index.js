@@ -4,7 +4,9 @@ function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'defau
 
 var path = require('path');
 var jsonServer = _interopDefault(require('json-server'));
+var https = require('https');
 var Mock = _interopDefault(require('mockjs'));
+var fs = require('fs');
 
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation. All rights reserved.
@@ -174,6 +176,28 @@ var middlewares = jsonServer.defaults({
     static: path.resolve(__dirname, './public')
 });
 server$1.use(middlewares);
+var createServer = function (option) {
+    var config = option.https;
+    if (config instanceof Object) {
+        if (typeof config.key !== 'string' || typeof config.cert !== 'string' || config.key.length + config.cert.length === 0) {
+            config.key = fs.readFileSync(path.join(__dirname, 'ssl/key.pem'));
+            config.cert = fs.readFileSync(path.join(__dirname, 'ssl/cert.pem'));
+            console.log("正在使用默认的证书配置");
+        }
+        https.createServer(config, server$1).listen(option.port, function () {
+            console.log();
+            console.log("\u5DF2\u542F\u52A8json-server\u670D\u52A1\u5668 https://localhost:" + option.port);
+            console.log();
+        });
+    }
+    else {
+        server$1.listen(option.port, function () {
+            console.log();
+            console.log("\u5DF2\u542F\u52A8json-server\u670D\u52A1\u5668 http://localhost:" + option.port);
+            console.log();
+        });
+    }
+};
 /**
  * 启动mock服务
  * @func
@@ -340,11 +364,7 @@ var Server$1 = function (option) {
         res.status(200).jsonp(body);
     };
     server$1.use(router);
-    server$1.listen(option.port, function () {
-        console.log();
-        console.log("\u5DF2\u542F\u52A8json-server\u670D\u52A1\u5668 http://localhost:" + option.port);
-        console.log();
-    });
+    createServer(option);
 };
 
 /**
