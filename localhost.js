@@ -136,7 +136,7 @@ var rules = {
 };
 
 var getInfo = function (req, option, headers) {
-    var url = req._parsedUrl.pathname.replace(/^\//, '');
+    var url = req._parsedUrl.href.replace(/^\//, '');
     return {
         url: url,
         data: option.mockData[url],
@@ -176,7 +176,7 @@ var middlewares = jsonServer.defaults({
     static: path.resolve(__dirname, './public')
 });
 server$1.use(middlewares);
-var createServer = function (option) {
+var createServer = function (option, callback) {
     var config = option.https;
     if (config instanceof Object) {
         if (typeof config.key !== 'string' || typeof config.cert !== 'string' || config.key.length + config.cert.length === 0) {
@@ -188,6 +188,7 @@ var createServer = function (option) {
             console.log();
             console.log("\u5DF2\u542F\u52A8json-server\u670D\u52A1\u5668 https://localhost:" + option.port);
             console.log();
+            typeof callback == 'function' && callback();
         });
     }
     else {
@@ -195,6 +196,7 @@ var createServer = function (option) {
             console.log();
             console.log("\u5DF2\u542F\u52A8json-server\u670D\u52A1\u5668 http://localhost:" + option.port);
             console.log();
+            typeof callback == 'function' && callback();
         });
     }
 };
@@ -207,7 +209,7 @@ var createServer = function (option) {
  * @param {boolean=} option.crossDomain - 是否跨域 (便于在不设置请求头时, 快速配置跨域)
  * @param {number=} port - 服务器端口
  */
-var Server$1 = function (option) {
+var Server$1 = function (option, callback) {
     option = Object.assign({
         port: 3030,
         crossDomain: true,
@@ -364,7 +366,7 @@ var Server$1 = function (option) {
         res.status(200).jsonp(body);
     };
     server$1.use(router);
-    createServer(option);
+    createServer(option, callback);
 };
 
 var config$1 = {

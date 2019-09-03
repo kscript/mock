@@ -15,7 +15,7 @@ const middlewares = jsonServer.defaults({
 })
 
 server.use(middlewares)
-const createServer = (option: anyObject) => {
+const createServer = (option: anyObject, callback?: Function) => {
     let config = option.https
     if(config instanceof Object) {
         if (typeof config.key !== 'string' || typeof config.cert !== 'string' || config.key.length + config.cert.length === 0){
@@ -27,12 +27,14 @@ const createServer = (option: anyObject) => {
             console.log()
             console.log(`已启动json-server服务器 https://localhost:${option.port}`)
             console.log()
+            typeof callback == 'function' && callback();
         })
     } else {
         server.listen(option.port, () => {
             console.log()
             console.log(`已启动json-server服务器 http://localhost:${option.port}`)
             console.log()
+            typeof callback == 'function' && callback();
         })
     }
 }
@@ -45,7 +47,7 @@ const createServer = (option: anyObject) => {
  * @param {boolean=} option.crossDomain - 是否跨域 (便于在不设置请求头时, 快速配置跨域)
  * @param {number=} port - 服务器端口
  */
-const Server = option => {
+const Server = (option: anyObject, callback?: Function) => {
     option = Object.assign({
         port: 3030,
         crossDomain: true,
@@ -217,6 +219,6 @@ const Server = option => {
         res.status(200).jsonp(body)
     }
     server.use(router)
-    createServer(option);
+    createServer(option, callback);
 }
 export default Server

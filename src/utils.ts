@@ -1,7 +1,7 @@
 import Mock from 'mockjs';
 
 export const getInfo = (req, option, headers) => {
-    let url = req._parsedUrl.pathname.replace(/^\//, '')
+    let url = req._parsedUrl.href.replace(/^\//, '')
     return {
         url,
         data: option.mockData[url],
