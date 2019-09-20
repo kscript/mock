@@ -1,12 +1,11 @@
 {
   "name": "ks-mock",
-  "version": "1.1.16",
+  "version": "1.2.0",
   "description": "mock server 模拟后端API接口",
   "main": "index.js",
   "scripts": {
-    "mock": "npm run bundle && node localhost",
-    "prepublishOnly": "npm run bundle && npm run build",
-    "bundle": "rollup -c -i ./src/localhost.ts -o localhost.js",
+    "mock": "node ./public/server.js",
+    "prepublishOnly": "npm run build",
     "build": "rollup -c -i ./src/index.ts -o index.js",
     "typedoc": "typedoc --options typedoc.ts",
     "test": "jest"

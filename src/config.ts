@@ -20,17 +20,25 @@ class Base {
     }
 }
 class Server extends Base {
-    data: {
+    data = {
         login: false
     }
 }
 class User extends Base {
-    data: {
+    data = {
+    }
+}
+class Config extends Base {
+    data = {
+        username: 'admin',
+        password: '123456',
+        retryUrl: 'http://localhost:3030/info'
     }
 }
 
 export const server = new Server;
 export const user = new User;
+export const config = new Config;
 
 export const crossDomain = {
     'Access-Control-Allow-Origin': '*',
@@ -41,5 +49,6 @@ export const crossDomain = {
 export default {
     user,
     server,
+    config,
     crossDomain
 }

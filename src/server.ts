@@ -17,13 +17,14 @@ const middlewares = jsonServer.defaults({
 server.use(middlewares)
 const createServer = (option: anyObject, callback?: Function) => {
     let config = option.https
-    if(config instanceof Object) {
-        if (typeof config.key !== 'string' || typeof config.cert !== 'string' || config.key.length + config.cert.length === 0){
-            config.key = fs.readFileSync(path.join(__dirname,'ssl/key.pem'))
-            config.cert = fs.readFileSync(path.join(__dirname,'ssl/cert.pem'))
+    config = /^(boolean|number)$/.test(typeof config) ? config && {} : config
+    if (config instanceof Object) {
+        if (typeof config.key !== 'string' || typeof config.cert !== 'string' || config.key.length + config.cert.length === 0) {
+            config.key = fs.readFileSync(path.join(__dirname, 'ssl/key.pem'))
+            config.cert = fs.readFileSync(path.join(__dirname, 'ssl/cert.pem'))
             console.log("正在使用默认的证书配置")
         }
-        https.createServer(config, server).listen(option.port, function() {
+        https.createServer(config, server).listen(option.port, function () {
             console.log()
             console.log(`已启动json-server服务器 https://localhost:${option.port}`)
             console.log()
@@ -123,6 +124,16 @@ const Server = (option: anyObject, callback?: Function) => {
                 if (!Array.isArray(relay)) {
                     relay = [relay]
                 }
+                if (relay.length) {
+                    if (!/(http(s)|\/\/)/.test(relay[0])) {
+                        let protocol = req.headers.referer.split(':')[0] + ':'
+                        if (typeof relay[0] == 'string') {
+                            relay[0] = protocol + '//' + (req.headers.host + relay[0]).replace(/\/+/g, '/')
+                        } else if(relay[0] instanceof Object) {
+                            relay[0].url = protocol + '//' + (req.headers.host + relay[0].url).replace(/\/+/g, '/')
+                        }
+                    }
+                }
                 request.apply(request, relay.concat((error, response, body) => {
                     if (!error) {
                         try {
@@ -146,6 +157,7 @@ const Server = (option: anyObject, callback?: Function) => {
                             code: 400,
                             message: "请求失败"
                         })
+                        console.log(error);
                     }
                 }))
                 return

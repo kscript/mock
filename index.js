@@ -136,7 +136,7 @@ var rules = {
 };
 
 var getInfo = function (req, option, headers) {
-    var url = req._parsedUrl.pathname.replace(/^\//, '');
+    var url = req._parsedUrl[/get/i.test(req.method) ? 'pathname' : 'href'].replace(/^\//, '');
     return {
         url: url,
         data: option.mockData[url],
@@ -176,8 +176,9 @@ var middlewares = jsonServer.defaults({
     static: path.resolve(__dirname, './public')
 });
 server$1.use(middlewares);
-var createServer = function (option) {
+var createServer = function (option, callback) {
     var config = option.https;
+    config = /^(boolean|number)$/.test(typeof config) ? config && {} : config;
     if (config instanceof Object) {
         if (typeof config.key !== 'string' || typeof config.cert !== 'string' || config.key.length + config.cert.length === 0) {
             config.key = fs.readFileSync(path.join(__dirname, 'ssl/key.pem'));
@@ -188,6 +189,7 @@ var createServer = function (option) {
             console.log();
             console.log("\u5DF2\u542F\u52A8json-server\u670D\u52A1\u5668 https://localhost:" + option.port);
             console.log();
+            typeof callback == 'function' && callback();
         });
     }
     else {
@@ -195,6 +197,7 @@ var createServer = function (option) {
             console.log();
             console.log("\u5DF2\u542F\u52A8json-server\u670D\u52A1\u5668 http://localhost:" + option.port);
             console.log();
+            typeof callback == 'function' && callback();
         });
     }
 };
@@ -207,7 +210,7 @@ var createServer = function (option) {
  * @param {boolean=} option.crossDomain - 是否跨域 (便于在不设置请求头时, 快速配置跨域)
  * @param {number=} port - 服务器端口
  */
-var Server$1 = function (option) {
+var Server$1 = function (option, callback) {
     option = Object.assign({
         port: 3030,
         crossDomain: true,
@@ -274,6 +277,17 @@ var Server$1 = function (option) {
                 if (!Array.isArray(relay)) {
                     relay = [relay];
                 }
+                if (relay.length) {
+                    if (!/(http(s)|\/\/)/.test(relay[0])) {
+                        var protocol = req.headers.referer.split(':')[0] + ':';
+                        if (typeof relay[0] == 'string') {
+                            relay[0] = protocol + '//' + (req.headers.host + relay[0]).replace(/\/+/g, '/');
+                        }
+                        else if (relay[0] instanceof Object) {
+                            relay[0].url = protocol + '//' + (req.headers.host + relay[0].url).replace(/\/+/g, '/');
+                        }
+                    }
+                }
                 request.apply(request, relay.concat(function (error, response, body) {
                     if (!error) {
                         try {
@@ -300,6 +314,7 @@ var Server$1 = function (option) {
                             code: 400,
                             message: "请求失败"
                         });
+                        console.log(error);
                     }
                 }));
                 return;
@@ -364,7 +379,7 @@ var Server$1 = function (option) {
         res.status(200).jsonp(body);
     };
     server$1.use(router);
-    createServer(option);
+    createServer(option, callback);
 };
 
 /**

@@ -1,10 +1,7 @@
 
-const config = {
-    username: 'admin',
-    password: '123456',
-    retryUrl: 'http://localhost:3030/info'
-}
-const defaultConfig = Object.assign({}, config)
+import { config as _config } from './config';
+const defaultConfig = Object.assign({}, _config.data);
+const config = defaultConfig;
 
 export const login: api = {
     // 转发
