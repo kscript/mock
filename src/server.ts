@@ -82,7 +82,17 @@ const Server = (option: anyObject, callback?: Function) => {
         // 1. 验证用户请求的api地址是否有数据
         if (data || transfer) {
             data = data || {}
-            result = JSON.parse(JSON.stringify(data[method] || {}))
+            try {
+                result = JSON.parse(
+                    JSON.stringify(
+                        typeof data[method] == 'function' 
+                        ? data[method](method, params, result) 
+                        : data[method] instanceof Object 
+                            ? data[method]
+                            : {}
+                    )
+                )
+            } catch (e) {}
             if (!(result instanceof Object)) {
                 result = {}
             }
@@ -168,6 +178,9 @@ const Server = (option: anyObject, callback?: Function) => {
                 if (urlKey === option.loginUrl) {
                     auth.login(params)
                 }
+                if (urlKey === option.logoutUrl) {
+                    auth.logout()
+                }
                 // 如果存在当前的请求方法, 先根据配置进行处理, 再判断是否需要转交给 json-server
                 let formatResult = data[method] && data.format ? data.format(method, params, result, { url }) : undefined;
                 if (formatResult) {
@@ -206,11 +219,12 @@ const Server = (option: anyObject, callback?: Function) => {
 
         mockData = mockData || {}
         let body = {
-            code: 200,
+            code: 201,
             message: 'ok',
             data: res.locals.data
         }
         let current = mockData[urlKey]
+
         if (urlKey === option.loginUrl) {
             auth.login(params)
         } else if (urlKey === option.logoutUrl) {

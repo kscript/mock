@@ -64,28 +64,49 @@ var Base = /** @class */ (function () {
 var Server = /** @class */ (function (_super) {
     __extends(Server, _super);
     function Server() {
-        return _super !== null && _super.apply(this, arguments) || this;
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.data = {
+            login: false
+        };
+        return _this;
     }
     return Server;
 }(Base));
 var User = /** @class */ (function (_super) {
     __extends(User, _super);
     function User() {
-        return _super !== null && _super.apply(this, arguments) || this;
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.data = {};
+        return _this;
     }
     return User;
 }(Base));
+var Config = /** @class */ (function (_super) {
+    __extends(Config, _super);
+    function Config() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.data = {
+            username: 'admin',
+            password: '123456',
+            retryUrl: 'http://localhost:3030/info'
+        };
+        return _this;
+    }
+    return Config;
+}(Base));
 var server = new Server;
 var user = new User;
+var config = new Config;
 var crossDomain = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': '*',
     'Access-Control-Allow-Headers': '*',
     'Access-Control-Allow-Credentials': true
 };
-var config = {
+var config$1 = {
     user: user,
     server: server,
+    config: config,
     crossDomain: crossDomain
 };
 
@@ -117,6 +138,7 @@ var Auth = /** @class */ (function () {
      * 退出登录
      */
     Auth.prototype.logout = function () {
+        console.log(server);
         user.clear();
         server.set('login', false);
     };
@@ -226,14 +248,21 @@ var Server$1 = function (option, callback) {
     server$1.use(jsonServer.rewriter(option.rules instanceof Object ? option.rules : rules));
     server$1.use(function (req, res, next) {
         var http = new Http(res);
-        var _a = getInfo(req, option, config.crossDomain), url = _a.url, data = _a.data, method = _a.method, urlKey = _a.urlKey, params = _a.params, headConfig = _a.headConfig;
+        var _a = getInfo(req, option, config$1.crossDomain), url = _a.url, data = _a.data, method = _a.method, urlKey = _a.urlKey, params = _a.params, headConfig = _a.headConfig;
         var result = {};
         // 是否需要将接口的处理逻辑交由json-server
         var transfer = method === 'post' && router.db.__wrapped__.hasOwnProperty(urlKey);
         // 1. 验证用户请求的api地址是否有数据
         if (data || transfer) {
             data = data || {};
-            result = JSON.parse(JSON.stringify(data[method] || {}));
+            try {
+                result = JSON.parse(JSON.stringify(typeof data[method] == 'function'
+                    ? data[method](method, params, result)
+                    : data[method] instanceof Object
+                        ? data[method]
+                        : {}));
+            }
+            catch (e) { }
             if (!(result instanceof Object)) {
                 result = {};
             }
@@ -325,6 +354,9 @@ var Server$1 = function (option, callback) {
                 if (urlKey === option.loginUrl) {
                     auth.login(params);
                 }
+                if (urlKey === option.logoutUrl) {
+                    auth.logout();
+                }
                 // 如果存在当前的请求方法, 先根据配置进行处理, 再判断是否需要转交给 json-server
                 var formatResult = data[method] && data.format ? data.format(method, params, result, { url: url }) : undefined;
                 if (formatResult) {
@@ -355,10 +387,10 @@ var Server$1 = function (option, callback) {
         http.end(result);
     });
     router.render = function (req, res) {
-        var _a = getInfo(req, option, config.crossDomain), url = _a.url, method = _a.method, urlKey = _a.urlKey, params = _a.params;
+        var _a = getInfo(req, option, config$1.crossDomain), url = _a.url, method = _a.method, urlKey = _a.urlKey, params = _a.params;
         mockData = mockData || {};
         var body = {
-            code: 200,
+            code: 201,
             message: 'ok',
             data: res.locals.data
         };
