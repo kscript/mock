@@ -18,26 +18,31 @@ server.use(middlewares)
 const createServer = (option: anyObject, callback?: Function) => {
     let config = option.https
     config = /^(boolean|number)$/.test(typeof config) ? config && {} : config
+    let currentServer
     if (config instanceof Object) {
         if (typeof config.key !== 'string' || typeof config.cert !== 'string' || config.key.length + config.cert.length === 0) {
             config.key = fs.readFileSync(path.join(__dirname, 'ssl/key.pem'))
             config.cert = fs.readFileSync(path.join(__dirname, 'ssl/cert.pem'))
             console.log("正在使用默认的证书配置")
         }
-        https.createServer(config, server).listen(option.port, function () {
+        currentServer = https.createServer(config, server).listen(option.port, function () {
             console.log()
             console.log(`已启动json-server服务器 https://localhost:${option.port}`)
             console.log()
             typeof callback == 'function' && callback();
         })
     } else {
-        server.listen(option.port, () => {
+        currentServer = server.listen(option.port, () => {
             console.log()
             console.log(`已启动json-server服务器 http://localhost:${option.port}`)
             console.log()
             typeof callback == 'function' && callback();
         })
     }
+    currentServer.on('error', (...rest) => {
+        option.port++
+        createServer(option, callback)
+    })
 }
 /**
  * 启动mock服务
@@ -257,6 +262,6 @@ const Server = (option: anyObject, callback?: Function) => {
         res.status(200).jsonp(body)
     }
     server.use(router)
-    createServer(option, callback);
+    createServer(option, callback)
 }
 export default Server
