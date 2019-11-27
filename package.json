@@ -1,13 +1,14 @@
 {
   "name": "ks-mock",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "mock server 模拟后端API接口",
   "main": "index.js",
   "scripts": {
     "mock": "node ./public/server.js",
-    "prepublishOnly": "npm run build",
+    "prepublishOnly": "npm run mockData && npm run build",
     "build": "rollup -c -i ./src/index.ts -o index.js",
     "typedoc": "typedoc --options typedoc.ts",
+    "mockData": "tsc src/datas.ts --outdir public",
     "test": "jest"
   },
   "repository": {

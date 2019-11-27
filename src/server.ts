@@ -190,7 +190,20 @@ const Server = (option: anyObject, callback?: Function) => {
                     next()
                     return
                 }
-                http.writeHead(200, headConfig)
+                if (result instanceof Promise) {
+                    try {
+                        result.then((data) => {
+                            http.writeHead(200, headConfig)
+                            http.end(data)
+                        }).catch((e) => {
+                            http.writeHead(500, headConfig)
+                            http.end(e)
+                        })
+                    } catch(e) {}
+                    return
+                } else {
+                    http.writeHead(200, headConfig)
+                }
             } else {
                 http.writeHead(405, headConfig)
                 result = {
@@ -216,7 +229,6 @@ const Server = (option: anyObject, callback?: Function) => {
             urlKey,
             params,
         } = getInfo(req, option, config.crossDomain)
-
         mockData = mockData || {}
         let body = {
             code: 201,

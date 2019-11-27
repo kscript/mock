@@ -1,11 +1,9 @@
 "use strict";
 exports.__esModule = true;
-var config = {
-    username: 'admin',
-    password: '123456',
-    retryUrl: '/info'
-};
-var defaultConfig = Object.assign({}, config);
+/// <reference path="../types/datas.d.ts" />
+var config_1 = require("./config");
+var defaultConfig = Object.assign({}, config_1.config.data);
+var config = defaultConfig;
 exports.login = {
     // 转发
     relay: '',
@@ -59,8 +57,13 @@ exports.info = {
     },
     format: function (method, params, result) {
         result.message = 'hello ' + (params.username || 'world');
+        return new Promise(function (resolve, reject) {
+            setTimeout(function () {
+                reject(result);
+            }, 1e4);
+        });
         // 不返回, 那么修改无效
-        return result;
+        // return result
     },
     get: {
         code: 200,

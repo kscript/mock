@@ -138,7 +138,6 @@ var Auth = /** @class */ (function () {
      * 退出登录
      */
     Auth.prototype.logout = function () {
-        console.log(server);
         user.clear();
         server.set('login', false);
     };
@@ -367,7 +366,22 @@ var Server$1 = function (option, callback) {
                     next();
                     return;
                 }
-                http.writeHead(200, headConfig);
+                if (result instanceof Promise) {
+                    try {
+                        result.then(function (data) {
+                            http.writeHead(200, headConfig);
+                            http.end(data);
+                        }).catch(function (e) {
+                            http.writeHead(500, headConfig);
+                            http.end(e);
+                        });
+                    }
+                    catch (e) { }
+                    return;
+                }
+                else {
+                    http.writeHead(200, headConfig);
+                }
             }
             else {
                 http.writeHead(405, headConfig);

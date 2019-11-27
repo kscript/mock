@@ -1,5 +1,5 @@
 ## ks-mock
-一个模拟服务端api的工具, 支持 https、触发鉴权、模拟接口、模拟请求错误、转发请求 等功能
+一个模拟服务端api的工具, 支持 https、触发鉴权、模拟接口、模拟请求错误、转发请求, 异步操作 等功能
 
 ## npm命令
 ``` npm
@@ -59,8 +59,15 @@ new KsMock({
 module.exports = {
     login: {
         format: (method, params, result, { body }) => {
-            Object.assign(result.data, params);
-            return result
+          Object.assign(result.data, params);
+          // 同步
+          return result
+          // 异步
+          return new Promise((resolve, reject) => {
+            setTimeout(() => {
+              resolve(result)
+            }, 1e4)
+          })
         },
         post: {
           message: "登录成功!"

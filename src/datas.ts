@@ -1,4 +1,5 @@
 
+/// <reference path="../types/datas.d.ts" />
 import { config as _config } from './config';
 const defaultConfig = Object.assign({}, _config.data);
 const config = defaultConfig;
@@ -53,8 +54,13 @@ export const info: api = {
     },
     format(method, params, result) {
         result.message = 'hello ' + (params.username || 'world')
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                reject(result);
+            }, 1e4);
+        })
         // 不返回, 那么修改无效
-        return result
+        // return result
     },
     get: {
         code: 200,
