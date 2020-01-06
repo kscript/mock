@@ -4,9 +4,8 @@ import auth from './auth';
 import config from './config';
 import rules from './rules';
 import * as https from 'https';
-import { getInfo, mockResult, Http } from './utils'
+import { getInfo, mockResult, Http, errorHandler, relayHandler, methodHandler } from './utils'
 import * as  fs from 'fs';
-const request = require('request');
 const server = jsonServer.create()
 // 路径从根目录开始?
 const router = jsonServer.router(path.resolve(process.cwd(), 'db.json'))
@@ -44,6 +43,28 @@ const createServer = (option: anyObject, callback?: Function) => {
         createServer(option, callback)
     })
 }
+const formatResult = ({
+    data, method, params, result
+}) => {
+    try {
+        result = JSON.parse(
+            JSON.stringify(
+                typeof data[method] == 'function' 
+                ? data[method](method, params, result) 
+                : data[method] instanceof Object 
+                    ? data[method]
+                    : {}
+            )
+        )
+    } catch (e) {
+        result = {}
+    }
+    if (!(result instanceof Object)) {
+        result = {}
+    }
+    return result
+}
+
 /**
  * 启动mock服务
  * @func
@@ -87,19 +108,24 @@ const Server = (option: anyObject, callback?: Function) => {
         // 1. 验证用户请求的api地址是否有数据
         if (data || transfer) {
             data = data || {}
-            try {
-                result = JSON.parse(
-                    JSON.stringify(
-                        typeof data[method] == 'function' 
-                        ? data[method](method, params, result) 
-                        : data[method] instanceof Object 
-                            ? data[method]
-                            : {}
-                    )
-                )
-            } catch (e) {}
-            if (!(result instanceof Object)) {
-                result = {}
+            result = formatResult({
+                data,
+                method,
+                params,
+                result
+            })
+            const allOption = {
+                req,
+                url,
+                http,
+                urlKey,
+                data,
+                method,
+                params,
+                option,
+                headConfig,
+                result,
+                transfer
             }
             // 2. 处理鉴权
             // 当前链接不是登录入口 && 启用了鉴权功能 && 当前api需要鉴权 && 用户未能通过鉴权
@@ -112,103 +138,12 @@ const Server = (option: anyObject, callback?: Function) => {
                 return
             }
             // 3. 处理错误
-            if (data.error && typeof data.error === 'function') {
-                let errResult = data.error(method, params, result, { url })
-                if (errResult) {
-                    // 返回函数时, 可以在data.error得到两个参数res, headConfig, 方便进行自定义的错误输出
-                    if (typeof errResult === 'function') {
-                        errResult(http, headConfig)
-                        // 返回对象时, 将其作为错误信息输出
-                    } else if (typeof errResult === 'object') {
-                        http.writeHead(400, headConfig)
-                        http.end(errResult)
-                        // 输出默认错误信息
-                    } else {
-                        http.writeHead(400, headConfig)
-                        http.end({
-                            code: 400,
-                            message: typeof errResult === 'string' ? errResult : '请求出错'
-                        })
-                    }
-                    return
-                }
-            }
+            if (errorHandler(allOption) === false) { return }
             // 4. 处理转发请求
-            if (data.relay) {
-                let relay = typeof data.relay === 'function' ? data.relay(method, params, data[method], { url }) : data.relay
-                if (!Array.isArray(relay)) {
-                    relay = [relay]
-                }
-                if (relay.length) {
-                    if (!/(http(s)|\/\/)/.test(relay[0])) {
-                        let protocol = req.headers.referer.split(':')[0] + ':'
-                        if (typeof relay[0] == 'string') {
-                            relay[0] = protocol + '//' + (req.headers.host + relay[0]).replace(/\/+/g, '/')
-                        } else if(relay[0] instanceof Object) {
-                            relay[0].url = protocol + '//' + (req.headers.host + relay[0].url).replace(/\/+/g, '/')
-                        }
-                    }
-                }
-                request.apply(request, relay.concat((error, response, body) => {
-                    if (!error) {
-                        try {
-                            if (response.statusCode === 200) {
-                                http.writeHead(200, headConfig)
-                                http.end(body)
-                            } else {
-                                http.writeHead(response.statusCode, headConfig)
-                                http.end(body)
-                            }
-                            // 如果是登录入口请求成功
-                            if (method === 'post' && urlKey === option.loginUrl) {
-                                auth.login(params)
-                            }
-                        } catch (e) {
-                            console.log(e)
-                        }
-                    } else {
-                        http.writeHead(400, headConfig)
-                        http.end({
-                            code: 400,
-                            message: "请求失败"
-                        })
-                        console.log(error);
-                    }
-                }))
-                return
-            }
+            if (relayHandler(allOption) === false) { return }
             // 5. 验证请求方法是否存在
             if (data[method] || transfer) {
-                // 请求成功的链接是登录入口, 没有被上面的错误拦截, 则视为登录成功
-                if (urlKey === option.loginUrl) {
-                    auth.login(params)
-                }
-                if (urlKey === option.logoutUrl) {
-                    auth.logout()
-                }
-                // 如果存在当前的请求方法, 先根据配置进行处理, 再判断是否需要转交给 json-server
-                let formatResult = data[method] && data.format ? data.format(method, params, result, { url }) : undefined;
-                if (formatResult) {
-                    result = formatResult;
-                } else if (transfer) {
-                    // 如果没有配置当前的请求方法, 则后续操作由json-server控制
-                    next()
-                    return
-                }
-                if (result instanceof Promise) {
-                    try {
-                        result.then((data) => {
-                            http.writeHead(200, headConfig)
-                            http.end(data)
-                        }).catch((e) => {
-                            http.writeHead(500, headConfig)
-                            http.end(e)
-                        })
-                    } catch(e) {}
-                    return
-                } else {
-                    http.writeHead(200, headConfig)
-                }
+                if (methodHandler(allOption, next) === false) { return }
             } else {
                 http.writeHead(405, headConfig)
                 result = {
@@ -225,7 +160,6 @@ const Server = (option: anyObject, callback?: Function) => {
         }
         http.end(result)
     })
-
     router.render = (req, res) => {
         let {
             url,

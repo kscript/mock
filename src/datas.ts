@@ -38,14 +38,16 @@ export const logout: api = {
 }
 export const relay: api = {
     relay (method, params, result) {
+        let key = /get/i.test(method) ? 'qs' : 'form'
         return {
             url: config.retryUrl,
             method,
-            form: params,
+            [key]: params,
             json: true
         }
     }
 }
+
 export const info: api = {
     error(method, params, result) {
         if (!params.username) {
@@ -56,7 +58,7 @@ export const info: api = {
         result.message = 'hello ' + (params.username || 'world')
         return new Promise((resolve, reject) => {
             setTimeout(() => {
-                reject(result);
+                resolve(result);
             }, 1e4);
         })
         // 不返回, 那么修改无效

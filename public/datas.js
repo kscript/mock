@@ -41,12 +41,15 @@ exports.logout = {
 };
 exports.relay = {
     relay: function (method, params, result) {
-        return {
-            url: config.retryUrl,
-            method: method,
-            form: params,
-            json: true
-        };
+        var _a;
+        var key = /get/i.test(method) ? 'qs' : 'form';
+        return _a = {
+                url: config.retryUrl,
+                method: method
+            },
+            _a[key] = params,
+            _a.json = true,
+            _a;
     }
 };
 exports.info = {
@@ -59,7 +62,7 @@ exports.info = {
         result.message = 'hello ' + (params.username || 'world');
         return new Promise(function (resolve, reject) {
             setTimeout(function () {
-                reject(result);
+                resolve(result);
             }, 1e4);
         });
         // 不返回, 那么修改无效

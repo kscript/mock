@@ -156,6 +156,20 @@ var rules = {
     '/api/*': '$1'
 };
 
+var request = require('request');
+var Http = /** @class */ (function () {
+    function Http(res) {
+        this.res = null;
+        this.res = res;
+    }
+    Http.prototype.writeHead = function (code, header) {
+        this.res.writeHead(code, header);
+    };
+    Http.prototype.end = function (body) {
+        this.res.end(typeof body === 'string' ? body : JSON.stringify(mockResult(body)));
+    };
+    return Http;
+}());
 var getInfo = function (req, option, headers) {
     var url = req._parsedUrl[/get/i.test(req.method) ? 'pathname' : 'href'].replace(/^\//, '');
     return {
@@ -175,21 +189,121 @@ var getInfo = function (req, option, headers) {
 var mockResult = function (result) {
     return result instanceof Object ? Mock.mock(result) : result;
 };
-var Http = /** @class */ (function () {
-    function Http(res) {
-        this.res = null;
-        this.res = res;
+var errorHandler = function (_a) {
+    var url = _a.url, http = _a.http, data = _a.data, method = _a.method, params = _a.params, result = _a.result, headConfig = _a.headConfig;
+    if (typeof data.error === 'function') {
+        var errResult = data.error(method, params, result, { url: url });
+        if (errResult) {
+            // 返回函数时, 可以在data.error得到两个参数res, headConfig, 方便进行自定义的错误输出
+            if (typeof errResult === 'function') {
+                errResult(http, headConfig);
+                // 返回对象时, 将其作为错误信息输出
+            }
+            else if (typeof errResult === 'object') {
+                http.writeHead(400, headConfig);
+                http.end(errResult);
+                // 输出默认错误信息
+            }
+            else {
+                http.writeHead(400, headConfig);
+                http.end({
+                    code: 400,
+                    message: typeof errResult === 'string' ? errResult : '请求出错'
+                });
+            }
+            return false;
+        }
     }
-    Http.prototype.writeHead = function (code, header) {
-        this.res.writeHead(code, header);
-    };
-    Http.prototype.end = function (body) {
-        this.res.end(typeof body === 'string' ? body : JSON.stringify(mockResult(body)));
-    };
-    return Http;
-}());
+};
+var relayHandler = function (_a) {
+    var req = _a.req, url = _a.url, http = _a.http, urlKey = _a.urlKey, data = _a.data, method = _a.method, params = _a.params, option = _a.option, headConfig = _a.headConfig;
+    if (data.relay && /(string|function)/.test(typeof data.relay) || data.relay instanceof Object) {
+        var relay = typeof data.relay === 'function' ? data.relay(method, params, data[method], { url: url }) : data.relay;
+        if (!Array.isArray(relay)) {
+            relay = [relay];
+        }
+        if (relay.length) {
+            var url_1 = typeof relay[0] === 'string' ? relay[0] : relay[0] instanceof Object ? relay[0].url : '';
+            if (url_1 && !/(http(s)|\/\/)/.test(url_1)) {
+                var protocol = req.headers.referer.split(':')[0] + ':';
+                if (typeof relay[0] == 'string') {
+                    relay[0] = protocol + '//' + (req.headers.host + relay[0]).replace(/\/+/g, '/');
+                }
+                else if (relay[0] instanceof Object) {
+                    relay[0].url = protocol + '//' + (req.headers.host + relay[0].url).replace(/\/+/g, '/');
+                }
+            }
+        }
+        request.apply(request, relay.concat(function (error, response, body) {
+            if (!error) {
+                try {
+                    if (response.statusCode === 200) {
+                        http.writeHead(200, headConfig);
+                        http.end(body);
+                    }
+                    else {
+                        http.writeHead(response.statusCode, headConfig);
+                        http.end(body);
+                    }
+                    // 如果是登录入口请求成功
+                    if (method === 'post' && urlKey === option.loginUrl) {
+                        auth.login(params);
+                    }
+                }
+                catch (e) {
+                    console.log(e);
+                }
+            }
+            else {
+                http.writeHead(400, headConfig);
+                http.end({
+                    code: 400,
+                    message: "请求失败"
+                });
+                console.log(error);
+            }
+        }));
+        return false;
+    }
+};
+var methodHandler = function (_a, next) {
+    var req = _a.req, url = _a.url, http = _a.http, urlKey = _a.urlKey, data = _a.data, method = _a.method, params = _a.params, option = _a.option, headConfig = _a.headConfig, result = _a.result, transfer = _a.transfer;
+    // 请求成功的链接是登录入口, 没有被上面的错误拦截, 则视为登录成功
+    if (urlKey === option.loginUrl) {
+        auth.login(params);
+    }
+    if (urlKey === option.logoutUrl) {
+        auth.logout();
+    }
+    // 如果存在当前的请求方法, 先根据配置进行处理, 再判断是否需要转交给 json-server
+    var formatResult = data[method] && data.format ? data.format(method, params, result, { url: url }) : undefined;
+    if (formatResult) {
+        result = formatResult;
+    }
+    else if (transfer) {
+        // 如果没有配置当前的请求方法, 则后续操作由json-server控制
+        next();
+        return false;
+    }
+    if (result instanceof Promise) {
+        try {
+            result.then(function (data) {
+                http.writeHead(200, headConfig);
+                http.end(data);
+            }).catch(function (e) {
+                http.writeHead(500, headConfig);
+                http.end(e);
+            });
+        }
+        catch (e) { }
+        return false;
+    }
+    else {
+        http.writeHead(200, headConfig);
+    }
+    return true;
+};
 
-var request = require('request');
 var server$1 = jsonServer.create();
 // 路径从根目录开始?
 var router = jsonServer.router(path.resolve(process.cwd(), 'db.json'));
@@ -231,6 +345,23 @@ var createServer = function (option, callback) {
         createServer(option, callback);
     });
 };
+var formatResult = function (_a) {
+    var data = _a.data, method = _a.method, params = _a.params, result = _a.result;
+    try {
+        result = JSON.parse(JSON.stringify(typeof data[method] == 'function'
+            ? data[method](method, params, result)
+            : data[method] instanceof Object
+                ? data[method]
+                : {}));
+    }
+    catch (e) {
+        result = {};
+    }
+    if (!(result instanceof Object)) {
+        result = {};
+    }
+    return result;
+};
 /**
  * 启动mock服务
  * @func
@@ -263,17 +394,25 @@ var Server$1 = function (option, callback) {
         // 1. 验证用户请求的api地址是否有数据
         if (data || transfer) {
             data = data || {};
-            try {
-                result = JSON.parse(JSON.stringify(typeof data[method] == 'function'
-                    ? data[method](method, params, result)
-                    : data[method] instanceof Object
-                        ? data[method]
-                        : {}));
-            }
-            catch (e) { }
-            if (!(result instanceof Object)) {
-                result = {};
-            }
+            result = formatResult({
+                data: data,
+                method: method,
+                params: params,
+                result: result
+            });
+            var allOption = {
+                req: req,
+                url: url,
+                http: http,
+                urlKey: urlKey,
+                data: data,
+                method: method,
+                params: params,
+                option: option,
+                headConfig: headConfig,
+                result: result,
+                transfer: transfer
+            };
             // 2. 处理鉴权
             // 当前链接不是登录入口 && 启用了鉴权功能 && 当前api需要鉴权 && 用户未能通过鉴权
             if (urlKey !== option.loginUrl && option.bounded && !data.public && !auth.verify()) {
@@ -285,111 +424,17 @@ var Server$1 = function (option, callback) {
                 return;
             }
             // 3. 处理错误
-            if (data.error && typeof data.error === 'function') {
-                var errResult = data.error(method, params, result, { url: url });
-                if (errResult) {
-                    // 返回函数时, 可以在data.error得到两个参数res, headConfig, 方便进行自定义的错误输出
-                    if (typeof errResult === 'function') {
-                        errResult(http, headConfig);
-                        // 返回对象时, 将其作为错误信息输出
-                    }
-                    else if (typeof errResult === 'object') {
-                        http.writeHead(400, headConfig);
-                        http.end(errResult);
-                        // 输出默认错误信息
-                    }
-                    else {
-                        http.writeHead(400, headConfig);
-                        http.end({
-                            code: 400,
-                            message: typeof errResult === 'string' ? errResult : '请求出错'
-                        });
-                    }
-                    return;
-                }
+            if (errorHandler(allOption) === false) {
+                return;
             }
             // 4. 处理转发请求
-            if (data.relay) {
-                var relay = typeof data.relay === 'function' ? data.relay(method, params, data[method], { url: url }) : data.relay;
-                if (!Array.isArray(relay)) {
-                    relay = [relay];
-                }
-                if (relay.length) {
-                    if (!/(http(s)|\/\/)/.test(relay[0])) {
-                        var protocol = req.headers.referer.split(':')[0] + ':';
-                        if (typeof relay[0] == 'string') {
-                            relay[0] = protocol + '//' + (req.headers.host + relay[0]).replace(/\/+/g, '/');
-                        }
-                        else if (relay[0] instanceof Object) {
-                            relay[0].url = protocol + '//' + (req.headers.host + relay[0].url).replace(/\/+/g, '/');
-                        }
-                    }
-                }
-                request.apply(request, relay.concat(function (error, response, body) {
-                    if (!error) {
-                        try {
-                            if (response.statusCode === 200) {
-                                http.writeHead(200, headConfig);
-                                http.end(body);
-                            }
-                            else {
-                                http.writeHead(response.statusCode, headConfig);
-                                http.end(body);
-                            }
-                            // 如果是登录入口请求成功
-                            if (method === 'post' && urlKey === option.loginUrl) {
-                                auth.login(params);
-                            }
-                        }
-                        catch (e) {
-                            console.log(e);
-                        }
-                    }
-                    else {
-                        http.writeHead(400, headConfig);
-                        http.end({
-                            code: 400,
-                            message: "请求失败"
-                        });
-                        console.log(error);
-                    }
-                }));
+            if (relayHandler(allOption) === false) {
                 return;
             }
             // 5. 验证请求方法是否存在
             if (data[method] || transfer) {
-                // 请求成功的链接是登录入口, 没有被上面的错误拦截, 则视为登录成功
-                if (urlKey === option.loginUrl) {
-                    auth.login(params);
-                }
-                if (urlKey === option.logoutUrl) {
-                    auth.logout();
-                }
-                // 如果存在当前的请求方法, 先根据配置进行处理, 再判断是否需要转交给 json-server
-                var formatResult = data[method] && data.format ? data.format(method, params, result, { url: url }) : undefined;
-                if (formatResult) {
-                    result = formatResult;
-                }
-                else if (transfer) {
-                    // 如果没有配置当前的请求方法, 则后续操作由json-server控制
-                    next();
+                if (methodHandler(allOption, next) === false) {
                     return;
-                }
-                if (result instanceof Promise) {
-                    try {
-                        result.then(function (data) {
-                            http.writeHead(200, headConfig);
-                            http.end(data);
-                        }).catch(function (e) {
-                            http.writeHead(500, headConfig);
-                            http.end(e);
-                        });
-                    }
-                    catch (e) { }
-                    return;
-                }
-                else {
-                    http.writeHead(200, headConfig);
                 }
             }
             else {
