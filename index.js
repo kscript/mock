@@ -186,8 +186,36 @@ var getInfo = function (req, option, headers) {
         option.crossDomain ? headers : {}), option.headConfig)
     };
 };
+var formatResult = function (_a) {
+    var data = _a.data, method = _a.method, params = _a.params, result = _a.result;
+    try {
+        result = JSON.parse(JSON.stringify(typeof data[method] == 'function'
+            ? data[method](method, params, result)
+            : data[method] instanceof Object
+                ? data[method]
+                : {}));
+    }
+    catch (e) {
+        result = {};
+    }
+    if (!(result instanceof Object)) {
+        result = {};
+    }
+    return result;
+};
 var mockResult = function (result) {
     return result instanceof Object ? Mock.mock(result) : result;
+};
+var authHandler = function (_a) {
+    var http = _a.http, data = _a.data, option = _a.option, urlKey = _a.urlKey, headConfig = _a.headConfig;
+    if (urlKey !== option.loginUrl && option.bounded && !data.public && !auth.verify()) {
+        http.writeHead(401, headConfig);
+        http.end({
+            code: 401,
+            message: urlKey && urlKey === option.logoutUrl ? '退出失败' : '权限不足, 请先登录'
+        });
+        return false;
+    }
 };
 var errorHandler = function (_a) {
     var url = _a.url, http = _a.http, data = _a.data, method = _a.method, params = _a.params, result = _a.result, headConfig = _a.headConfig;
@@ -345,23 +373,6 @@ var createServer = function (option, callback) {
         createServer(option, callback);
     });
 };
-var formatResult = function (_a) {
-    var data = _a.data, method = _a.method, params = _a.params, result = _a.result;
-    try {
-        result = JSON.parse(JSON.stringify(typeof data[method] == 'function'
-            ? data[method](method, params, result)
-            : data[method] instanceof Object
-                ? data[method]
-                : {}));
-    }
-    catch (e) {
-        result = {};
-    }
-    if (!(result instanceof Object)) {
-        result = {};
-    }
-    return result;
-};
 /**
  * 启动mock服务
  * @func
@@ -421,6 +432,10 @@ var Server$1 = function (option, callback) {
                     code: 401,
                     message: urlKey && urlKey === option.logoutUrl ? '退出失败' : '权限不足, 请先登录'
                 });
+                return;
+            }
+            // 3. 处理错误
+            if (authHandler(allOption) === false) {
                 return;
             }
             // 3. 处理错误

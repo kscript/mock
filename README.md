@@ -195,16 +195,31 @@ mockData 属性, 存放客户端请求api时的返回数据, 以及对返回数�
        * @param {object} params 请求参数
        * @param {any} result 默认返回结果的副本
        * @desc relay 可以是一个url字符串
-       * @returns 参数数组, 会通过 apply 传给 request 模块, 参数说明参考 request 模块, (预置了最后一个函数参数, 建议不要传这个参数) request中的传参字段: get为qs, post为form
+       * @returns string/object/array
       */
       relay: (method, params, result) => {
-        return ['url', {}, () => {}]
+        let url = ''
+        // 返回值用于给 request 模块传参, 调用逻辑:
+        // request.apply(request, Array.isArray(returns) ? returns : [returns])
+        // request中的传参字段: get为qs, post为form
+        return url
+        // return {
+        //   url,
+        //   [/post/i.test(method) ? 'form' : 'qs']: {
+        //     test: 123
+        //   }
+        // }
+        // return [url, {
+        //   [/post/i.test(method) ? 'form' : 'qs']: {
+        //     test: 123
+        //   }
+        // }]
       },
 
       // 请求方法, 返回数据
       // 返回数据可以使用 mockjs 来填充数据, 也可以直接写json
 
-      // 请求方法为函数时, 参数与其它方法一致, 但result为空对象, 返回值作为返回数据
+      // 请求方法为函数时, 参数与format/error/ralay等方法一致, 但result为空对象, 返回值作为返回数据
       // get: (method, params, result) => {}
       get: {
         // ...

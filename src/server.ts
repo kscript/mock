@@ -4,7 +4,7 @@ import auth from './auth';
 import config from './config';
 import rules from './rules';
 import * as https from 'https';
-import { getInfo, mockResult, Http, errorHandler, relayHandler, methodHandler } from './utils'
+import { Http, getInfo, formatResult, mockResult, authHandler, errorHandler, relayHandler, methodHandler } from './utils'
 import * as  fs from 'fs';
 const server = jsonServer.create()
 // 路径从根目录开始?
@@ -42,27 +42,6 @@ const createServer = (option: anyObject, callback?: Function) => {
         option.port++
         createServer(option, callback)
     })
-}
-const formatResult = ({
-    data, method, params, result
-}) => {
-    try {
-        result = JSON.parse(
-            JSON.stringify(
-                typeof data[method] == 'function' 
-                ? data[method](method, params, result) 
-                : data[method] instanceof Object 
-                    ? data[method]
-                    : {}
-            )
-        )
-    } catch (e) {
-        result = {}
-    }
-    if (!(result instanceof Object)) {
-        result = {}
-    }
-    return result
 }
 
 /**
@@ -137,6 +116,8 @@ const Server = (option: anyObject, callback?: Function) => {
                 })
                 return
             }
+            // 3. 处理错误
+            if (authHandler(allOption) === false) { return }
             // 3. 处理错误
             if (errorHandler(allOption) === false) { return }
             // 4. 处理转发请求

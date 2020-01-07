@@ -35,10 +35,47 @@ export const getInfo = (req, option, headers) => {
         )
     }
 }
+export const formatResult = ({
+    data, method, params, result
+}) => {
+    try {
+        result = JSON.parse(
+            JSON.stringify(
+                typeof data[method] == 'function' 
+                ? data[method](method, params, result) 
+                : data[method] instanceof Object 
+                    ? data[method]
+                    : {}
+            )
+        )
+    } catch (e) {
+        result = {}
+    }
+    if (!(result instanceof Object)) {
+        result = {}
+    }
+    return result
+}
+
 export const mockResult = (result) => {
     return result instanceof Object ? Mock.mock(result) : result
 }
-
+export const authHandler = ({
+    http,
+    data,
+    option,
+    urlKey,
+    headConfig
+}) => {
+    if (urlKey !== option.loginUrl && option.bounded && !data.public && !auth.verify()) {
+        http.writeHead(401, headConfig)
+        http.end({
+            code: 401,
+            message: urlKey && urlKey === option.logoutUrl ? '退出失败' : '权限不足, 请先登录'
+        })
+        return false
+    }
+}
 export const errorHandler = ({
     url,
     http,
@@ -175,7 +212,9 @@ export const methodHandler = ({
 export default {
     Http,
     getInfo,
+    formatResult,
     mockResult,
+    authHandler,
     errorHandler, 
     relayHandler,
     methodHandler
