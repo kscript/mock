@@ -425,16 +425,6 @@ var Server$1 = function (option, callback) {
                 transfer: transfer
             };
             // 2. 处理鉴权
-            // 当前链接不是登录入口 && 启用了鉴权功能 && 当前api需要鉴权 && 用户未能通过鉴权
-            if (urlKey !== option.loginUrl && option.bounded && !data.public && !auth.verify()) {
-                http.writeHead(401, headConfig);
-                http.end({
-                    code: 401,
-                    message: urlKey && urlKey === option.logoutUrl ? '退出失败' : '权限不足, 请先登录'
-                });
-                return;
-            }
-            // 3. 处理错误
             if (authHandler(allOption) === false) {
                 return;
             }

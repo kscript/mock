@@ -59,7 +59,7 @@ export const info: api = {
         return new Promise((resolve, reject) => {
             setTimeout(() => {
                 resolve(result);
-            }, 1e4);
+            }, ~~(Math.random() * 1e4));
         })
         // 不返回, 那么修改无效
         // return result

@@ -63,7 +63,7 @@ exports.info = {
         return new Promise(function (resolve, reject) {
             setTimeout(function () {
                 resolve(result);
-            }, 1e4);
+            }, ~~(Math.random() * 1e4));
         });
         // 不返回, 那么修改无效
         // return result
