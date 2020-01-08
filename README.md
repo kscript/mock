@@ -71,6 +71,7 @@ module.exports = {
           })
         },
         post: {
+          data: {},
           message: "登录成功!"
         }
     },
