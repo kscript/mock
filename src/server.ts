@@ -6,6 +6,7 @@ import rules from './rules';
 import * as https from 'https';
 import { Http, getInfo, formatResult, mockResult, authHandler, errorHandler, relayHandler, methodHandler } from './utils'
 import * as  fs from 'fs';
+import { mock } from '../';
 const server = jsonServer.create()
 // 路径从根目录开始?
 const router = jsonServer.router(path.resolve(process.cwd(), 'db.json'))
@@ -14,7 +15,7 @@ const middlewares = jsonServer.defaults({
 })
 
 server.use(middlewares)
-const createServer = (option: anyObject, callback?: Function) => {
+const createServer = (option: mock.anyObject, callback?: Function) => {
     let config = option.https
     config = /^(boolean|number)$/.test(typeof config) ? config && {} : config
     let currentServer
@@ -53,7 +54,7 @@ const createServer = (option: anyObject, callback?: Function) => {
  * @param {boolean=} option.crossDomain - 是否跨域 (便于在不设置请求头时, 快速配置跨域)
  * @param {number=} port - 服务器端口
  */
-const Server = (option: anyObject, callback?: Function) => {
+const Server = (option: mock.anyObject, callback?: Function) => {
     option = Object.assign({
         port: 3030,
         crossDomain: true,

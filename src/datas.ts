@@ -1,10 +1,9 @@
-
-/// <reference path="../types/datas.d.ts" />
+import { mock } from '..';
 import { config as _config } from './config';
 const defaultConfig = Object.assign({}, _config.data);
 const config = defaultConfig;
 
-export const login: api = {
+export const login: mock.api = {
     // 转发
     relay: '',
     // 格式化请求结果
@@ -28,7 +27,7 @@ export const login: api = {
         message: '登录成功!'
     }
 }
-export const logout: api = {
+export const logout: mock.api = {
     format: (method, params, result, { body }) => {
         return Object.assign(body || {}, result)
     },
@@ -36,7 +35,7 @@ export const logout: api = {
         message: '退出成功!'
     }
 }
-export const relay: api = {
+export const relay: mock.api = {
     relay (method, params, result) {
         let key = /get/i.test(method) ? 'qs' : 'form'
         return {
@@ -48,7 +47,7 @@ export const relay: api = {
     }
 }
 
-export const info: api = {
+export const info: mock.api = {
     error(method, params, result) {
         if (!params.username) {
             return '参数不足'
@@ -70,7 +69,7 @@ export const info: api = {
         data: {}
     }
 }
-export const settings: api = {
+export const settings: mock.api = {
     // 公开当前接口
     public: true,
     format(method, params, result) {

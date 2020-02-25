@@ -1,6 +1,5 @@
 "use strict";
 exports.__esModule = true;
-/// <reference path="../types/datas.d.ts" />
 var config_1 = require("./config");
 var defaultConfig = Object.assign({}, config_1.config.data);
 var config = defaultConfig;

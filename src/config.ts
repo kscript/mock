@@ -1,5 +1,6 @@
+import {mock} from '../'
 class Base {
-    data: anyObject = {}
+    data: mock.anyObject = {}
     get(key?: string): any {
         return key ? this.data[key] : this.data
     }
@@ -7,7 +8,7 @@ class Base {
         this.data[key] = val
         return this
     }
-    reset(obj: anyObject): Base {
+    reset(obj: mock.anyObject): Base {
         this.clear()
         Object.assign(this.data, obj)
         return this

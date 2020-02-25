@@ -487,21 +487,21 @@ var Server$1 = function (option, callback) {
     createServer(option, callback);
 };
 
-/**
- * mock实例
- * @param option 配置
- */
-function KsMock(option) {
-    this.option = option;
-}
-KsMock.prototype.apply = function (compiler) {
-    Server$1(this.option);
-    compiler.plugin("emit", function (compilation, callback) {
-        callback();
-    });
-};
-KsMock.prototype.server = function (option) {
-    Server$1(option || this.option);
-};
+var KsMock = /** @class */ (function () {
+    function KsMock(option) {
+        this.option = {};
+        this.option = option;
+    }
+    KsMock.prototype.apply = function (compiler) {
+        Server$1(this.option);
+        compiler.plugin("emit", function (compilation, callback) {
+            callback();
+        });
+    };
+    KsMock.prototype.server = function (option) {
+        Server$1(option || this.option);
+    };
+    return KsMock;
+}());
 
 module.exports = KsMock;
