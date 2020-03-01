@@ -1,6 +1,12 @@
+export declare class KsMock {
+    public option: any;
+    constructor(option: any);
+    public apply(compiler: any): void;
+    public server(option?: any): void;
+}
 export namespace mock {
-    interface anyObject {
-        [prop: string]: any
+    interface anyObject<T=any> {
+        [prop: string]: T
     }
     type apiFunc = (
         method: string,
@@ -34,3 +40,4 @@ export namespace mock {
         [prop: string]: any;
     }
 }
+export default KsMock
