@@ -10,16 +10,20 @@ import { mock } from '../';
 const server = jsonServer.create()
 // 路径从根目录开始?
 const router = jsonServer.router(path.resolve(process.cwd(), 'db.json'))
-const middlewares = jsonServer.defaults({
-    static: path.resolve(__dirname, './public')
-})
 
-server.use(middlewares)
 const createServer = (option: mock.anyObject, callback?: Function) => {
     let config = option.https
     config = /^(boolean|number)$/.test(typeof config) ? config && {} : config
     let currentServer
     if (config instanceof Object) {
+        if (typeof config.static === 'function') {
+            config.static(jsonServer, server)
+        } else {
+            const middlewares = jsonServer.defaults({
+                static: typeof config.static === 'string' ? config.static : path.resolve(process.cwd(), './public')
+            })
+            server.use(middlewares)
+        }
         if (typeof config.key !== 'string' || typeof config.cert !== 'string' || config.key.length + config.cert.length === 0) {
             config.key = fs.readFileSync(path.join(__dirname, 'ssl/key.pem'))
             config.cert = fs.readFileSync(path.join(__dirname, 'ssl/cert.pem'))

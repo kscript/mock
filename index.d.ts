@@ -1,9 +1,3 @@
-export declare class KsMock {
-    public option: mock.options;
-    constructor(option: mock.options);
-    public apply(compiler: any): void;
-    public server(option?: mock.options): void;
-}
 export namespace mock {
     
     interface anyObject<T=any> {
@@ -29,6 +23,8 @@ export namespace mock {
         crossDomain?: boolean;
         // 端口号
         port?: number;
+        // 静态文件目录
+        static?: string | ((jsonServer: Object, server: Object) => void);
         // https证书配置
         https?: {
             key: string;
@@ -64,4 +60,11 @@ export namespace mock {
         }
     ) => undefined | object | string | Function;
 }
+export declare class KsMock {
+    public option: mock.options;
+    constructor(option: mock.options);
+    public apply(compiler: any): void;
+    public server(option?: mock.options): void;
+}
+
 export default KsMock
