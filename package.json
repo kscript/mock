@@ -1,6 +1,6 @@
 {
   "name": "ks-mock",
-  "version": "1.3.3",
+  "version": "1.3.4",
   "description": "mock server 模拟后端API接口",
   "main": "index.js",
   "scripts": {

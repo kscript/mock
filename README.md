@@ -136,6 +136,7 @@ module.exports = {
 | rules | object | - | 路由重写规则, 参考 [json-server rewriter](https://github.com/typicode/json-server#rewriter-example) |
 | loginUrl | string | - | 登录地址, 如果配置了loginUrl, 那么除登录和public属性为true的接口外, 其它接口必须在登录之后才可以正常执行 |
 | logoutUrl | string | - | 退出登录地址 |
+| interceptor | function | - | 拦截器, 用于拦截/修改发送的请求 |
 
 mockData 属性, 存放客户端请求api时的返回数据, 以及对返回数据的一些操作  
 支持的可选操作有: 

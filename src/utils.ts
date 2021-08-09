@@ -14,6 +14,12 @@ export class Http {
         this.res.end(typeof body === 'string' ? body : JSON.stringify(mockResult(body)))
     }
 }
+export const noop = (func: Function | any) : Function => {
+    if (typeof func === 'function') {
+        return func
+    }
+    return () => {}
+}
 export const getInfo = (req, option, headers) => {
     let url = req._parsedUrl[/get/i.test(req.method) ? 'pathname' : 'href'].replace(/^\//, '')
     return {

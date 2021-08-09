@@ -9,18 +9,18 @@ var Mock = _interopDefault(require('mockjs'));
 var fs = require('fs');
 
 /*! *****************************************************************************
-Copyright (c) Microsoft Corporation. All rights reserved.
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use
-this file except in compliance with the License. You may obtain a copy of the
-License at http://www.apache.org/licenses/LICENSE-2.0
+Copyright (c) Microsoft Corporation.
 
-THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
-WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,
-MERCHANTABLITY OR NON-INFRINGEMENT.
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
 
-See the Apache Version 2.0 License for specific language governing permissions
-and limitations under the License.
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
 /* global Reflect, Promise */
 
@@ -170,6 +170,12 @@ var Http = /** @class */ (function () {
     };
     return Http;
 }());
+var noop = function (func) {
+    if (typeof func === 'function') {
+        return func;
+    }
+    return function () { };
+};
 var getInfo = function (req, option, headers) {
     var url = req._parsedUrl[/get/i.test(req.method) ? 'pathname' : 'href'].replace(/^\//, '');
     return {
@@ -335,15 +341,20 @@ var methodHandler = function (_a, next) {
 var server$1 = jsonServer.create();
 // 路径从根目录开始?
 var router = jsonServer.router(path.resolve(process.cwd(), 'db.json'));
-var middlewares = jsonServer.defaults({
-    static: path.resolve(__dirname, './public')
-});
-server$1.use(middlewares);
 var createServer = function (option, callback) {
     var config = option.https;
     config = /^(boolean|number)$/.test(typeof config) ? config && {} : config;
     var currentServer;
     if (config instanceof Object) {
+        if (typeof config.static === 'function') {
+            config.static(jsonServer, server$1);
+        }
+        else {
+            var middlewares = jsonServer.defaults({
+                static: typeof config.static === 'string' ? config.static : path.resolve(process.cwd(), './public')
+            });
+            server$1.use(middlewares);
+        }
         if (typeof config.key !== 'string' || typeof config.cert !== 'string' || config.key.length + config.cert.length === 0) {
             config.key = fs.readFileSync(path.join(__dirname, 'ssl/key.pem'));
             config.cert = fs.readFileSync(path.join(__dirname, 'ssl/cert.pem'));
@@ -397,6 +408,9 @@ var Server$1 = function (option, callback) {
     // 路由映射
     server$1.use(jsonServer.rewriter(option.rules instanceof Object ? option.rules : rules));
     server$1.use(function (req, res, next) {
+        if (noop(option.interceptor)(req, res, next) === false) {
+            return;
+        }
         var http = new Http(res);
         var _a = getInfo(req, option, config$1.crossDomain), url = _a.url, data = _a.data, method = _a.method, urlKey = _a.urlKey, params = _a.params, headConfig = _a.headConfig;
         var result = {};

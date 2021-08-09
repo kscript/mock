@@ -4,7 +4,7 @@ import auth from './auth';
 import config from './config';
 import rules from './rules';
 import * as https from 'https';
-import { Http, getInfo, formatResult, mockResult, authHandler, errorHandler, relayHandler, methodHandler } from './utils'
+import { Http, noop, getInfo, formatResult, mockResult, authHandler, errorHandler, relayHandler, methodHandler } from './utils'
 import * as  fs from 'fs';
 import { mock } from '../';
 const server = jsonServer.create()
@@ -76,6 +76,9 @@ const Server = (option: mock.anyObject, callback?: Function) => {
         jsonServer.rewriter(option.rules instanceof Object ? option.rules : rules)
     )
     server.use((req, res, next) => {
+        if (noop(option.interceptor)(req, res, next) === false) {
+            return ;
+        }
         const http = new Http(res)
         let {
             url,
