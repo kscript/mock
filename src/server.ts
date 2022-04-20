@@ -4,69 +4,51 @@ import auth from './auth';
 import config from './config';
 import rules from './rules';
 import * as https from 'https';
-import { Http, noop, getInfo, formatResult, mockResult, authHandler, errorHandler, relayHandler, methodHandler } from './utils'
+import { Http, noop, once, getInfo, formatResult, mockResult, authHandler, errorHandler, relayHandler, methodHandler } from './utils'
 import * as  fs from 'fs';
 import { mock } from '../';
 const server = jsonServer.create()
-// 路径从根目录开始?
-const router = jsonServer.router(path.resolve(process.cwd(), 'db.json'))
 
-const createServer = (option: mock.anyObject, callback?: Function) => {
-    let config = option.https
-    config = /^(boolean|number)$/.test(typeof config) ? config && {} : config
-    let currentServer
-    if (config instanceof Object) {
-        if (typeof config.static === 'function') {
-            config.static(jsonServer, server)
-        } else {
-            const middlewares = jsonServer.defaults({
-                static: typeof config.static === 'string' ? config.static : path.resolve(process.cwd(), './public')
-            })
-            server.use(middlewares)
-        }
-        if (typeof config.key !== 'string' || typeof config.cert !== 'string' || config.key.length + config.cert.length === 0) {
-            config.key = fs.readFileSync(path.join(__dirname, 'ssl/key.pem'))
-            config.cert = fs.readFileSync(path.join(__dirname, 'ssl/cert.pem'))
-            console.log("正在使用默认的证书配置")
-        }
-        currentServer = https.createServer(config, server).listen(option.port, function () {
-            console.log()
-            console.log(`已启动json-server服务器 https://localhost:${option.port}`)
-            console.log()
-            typeof callback == 'function' && callback();
-        })
+// 静态文件服务
+const useStaticServer = (option) => {
+    if (typeof option.static === 'function') {
+        option.static(jsonServer, server)
     } else {
-        currentServer = server.listen(option.port, () => {
-            console.log()
-            console.log(`已启动json-server服务器 http://localhost:${option.port}`)
-            console.log()
-            typeof callback == 'function' && callback();
+        const middlewares = jsonServer.defaults({
+            static: typeof option.static === 'string' ? option.static : path.resolve(__dirname, './public')
         })
+        server.use(middlewares)
     }
-    currentServer.on('error', (...rest) => {
-        option.port++
-        createServer(option, callback)
-    })
 }
 
-/**
- * 启动mock服务
- * @func
- * @param {object} option mock 服务配置
- * @param {mockData} option.mockData - mock数据json(支持 mockjs 中的写法)
- * @param {headoption=} option.headoption - 服务端请求头信息配置
- * @param {boolean=} option.crossDomain - 是否跨域 (便于在不设置请求头时, 快速配置跨域)
- * @param {number=} port - 服务器端口
- */
-const Server = (option: mock.anyObject, callback?: Function) => {
-    option = Object.assign({
-        port: 3030,
-        crossDomain: true,
-        headoption: null,
-        mockData: {},
-        bounded: !!option.loginUrl
-    }, option)
+// 上传文件服务
+const useUploadServer = (option) => {
+    const multer  = require('multer')
+    const storage = multer.diskStorage({
+        destination: function (req, file, cb) {
+            const done = once(cb)
+            if (noop(option.beforeUpload).call(option, req, file, done) !== false) {
+                done(null, option.uploadPath || path.join(__dirname, '/uploads'))
+            }
+        },
+        filename: function (req, file, cb) {
+            const done = once(cb)
+            if (noop(option.beforeWrite).call(option, req, file, done) !== false) {
+                done(null, file.originalname)
+            }
+        }
+    })
+    const upload = multer({ storage })
+    server.use(upload.any())
+}
+
+const useRouter = (option) => {
+    
+    // 路径从根目录开始?
+    const router = jsonServer.router(path.resolve(process.cwd(), 'db.json'))
+
     let mockData = option.mockData
+    
     // To handle POST, PUT and PATCH you need to use a body-parser
     // You can use the one used by JSON Server
     server.use(jsonServer.bodyParser)
@@ -86,8 +68,9 @@ const Server = (option: mock.anyObject, callback?: Function) => {
             method,
             urlKey,
             params,
-            headConfig
-        } = getInfo(req, option, config.crossDomain)
+            headConfig,
+            extra
+        } = getInfo(req, option, config.crossDomain, res)
         let result = {}
         // 是否需要将接口的处理逻辑交由json-server
         let transfer = method === 'post' && router.db.__wrapped__.hasOwnProperty(urlKey)
@@ -99,7 +82,8 @@ const Server = (option: mock.anyObject, callback?: Function) => {
                 data,
                 method,
                 params,
-                result
+                result,
+                extra
             })
             const allOption = {
                 req,
@@ -112,7 +96,8 @@ const Server = (option: mock.anyObject, callback?: Function) => {
                 option,
                 headConfig,
                 result,
-                transfer
+                transfer,
+                extra
             }
             // 2. 处理鉴权
             if (authHandler(allOption) === false) { return }
@@ -146,7 +131,8 @@ const Server = (option: mock.anyObject, callback?: Function) => {
             method,
             urlKey,
             params,
-        } = getInfo(req, option, config.crossDomain)
+            extra
+        } = getInfo(req, option, config.crossDomain, res)
         mockData = mockData || {}
         let body = {
             code: 201,
@@ -165,16 +151,71 @@ const Server = (option: mock.anyObject, callback?: Function) => {
                 method,
                 params,
                 JSON.parse(JSON.stringify(current[method] instanceof Object ? current[method] : {})),
-                {
+                Object.assign({}, extra, {
                     url,
                     body: JSON.parse(JSON.stringify(body))
-                }
+                })
             ) || body)
         }
         // post成功后, 对其返回数据进行包装
         res.status(200).jsonp(body)
     }
+    
     server.use(router)
-    createServer(option, callback)
+}
+
+const createServer = (option: mock.anyObject, callback?: Function) => {
+    let config = option.https
+    config = /^(boolean|number)$/.test(typeof config) ? config && {} : config
+    let currentServer
+    useStaticServer(option)
+    useUploadServer(option)
+    useRouter(option)
+
+    if (config instanceof Object) {
+        if (typeof config.key !== 'string' || typeof config.cert !== 'string' || config.key.length + config.cert.length === 0) {
+            config.key = fs.readFileSync(path.join(__dirname, 'ssl/key.pem'))
+            config.cert = fs.readFileSync(path.join(__dirname, 'ssl/cert.pem'))
+            console.log("正在使用默认的证书配置")
+        }
+        currentServer = https.createServer(config, server).listen(option.port, function () {
+            option.serverUrl = `https://localhost:${option.port}`
+            console.log()
+            console.log(`已启动json-server服务器 ${option.serverUrl}`)
+            console.log()
+            typeof callback == 'function' && callback();
+        })
+    } else {
+        currentServer = server.listen(option.port, () => {
+            option.serverUrl = `http://localhost:${option.port}`
+            console.log()
+            console.log(`已启动json-server服务器 ${option.serverUrl}`)
+            console.log()
+            typeof callback == 'function' && callback();
+        })
+    }
+    currentServer.on('error', (...rest) => {
+        option.port++
+        createServer(option, callback)
+    })
+}
+
+/**
+ * 启动mock服务
+ * @func
+ * @param {object} option mock 服务配置
+ * @param {mockData} option.mockData - mock数据json(支持 mockjs 中的写法)
+ * @param {headoption=} option.headoption - 服务端请求头信息配置
+ * @param {boolean=} option.crossDomain - 是否跨域 (便于在不设置请求头时, 快速配置跨域)
+ * @param {number=} port - 服务器端口
+ */
+const Server = (option: mock.anyObject, callback?: Function) => {
+    createServer(Object.assign({
+        port: 3030,
+        crossDomain: true,
+        headoption: null,
+        mockData: {},
+        bounded: !!option.loginUrl
+    }, option), callback)
 }
 export default Server

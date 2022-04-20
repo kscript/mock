@@ -20,10 +20,25 @@ export const noop = (func: Function | any) : Function => {
     }
     return () => {}
 }
-export const getInfo = (req, option, headers) => {
+export const once = (func: Function, context?: Object) => {
+    let called = false
+    return (...args) => {
+        if (!called) {
+            called = true
+            context ? func.call(context, ...args) : func(...args)
+        }
+    }
+}
+export const getInfo = (req, option, headers, res) => {
     let url = req._parsedUrl[/get/i.test(req.method) ? 'pathname' : 'href'].replace(/^\//, '')
     return {
         url,
+        extra: {
+            url,
+            files: req.files,
+            option,
+            res
+        },
         data: option.mockData[url],
         method: req.method.toLowerCase(),
         urlKey: (url || '').replace(/\/$/, '').replace(/\//g, '_'),
@@ -42,13 +57,13 @@ export const getInfo = (req, option, headers) => {
     }
 }
 export const formatResult = ({
-    data, method, params, result
+    data, method, params, result, extra
 }) => {
     try {
         result = JSON.parse(
             JSON.stringify(
                 typeof data[method] == 'function' 
-                ? data[method](method, params, result) 
+                ? data[method](method, params, result, extra) 
                 : data[method] instanceof Object 
                     ? data[method]
                     : {}
@@ -83,16 +98,16 @@ export const authHandler = ({
     }
 }
 export const errorHandler = ({
-    url,
     http,
     data,
     method, 
     params, 
     result,
-    headConfig
+    headConfig,
+    extra
 }) => {
     if (typeof data.error === 'function') {
-        let errResult = data.error(method, params, result, { url })
+        let errResult = data.error(method, params, result, extra)
         if (errResult) {
             // 返回函数时, 可以在data.error得到两个参数res, headConfig, 方便进行自定义的错误输出
             if (typeof errResult === 'function') {
@@ -122,10 +137,11 @@ export const relayHandler = ({
     method,
     params,
     option,
-    headConfig
+    headConfig,
+    extra
 }) => {
     if (data.relay && /(string|function)/.test(typeof data.relay) || data.relay instanceof Object) {
-        let relay = typeof data.relay === 'function' ? data.relay(method, params, data[method], { url }) : data.relay
+        let relay = typeof data.relay === 'function' ? data.relay(method, params, data[method], extra) : data.relay
         if (!Array.isArray(relay)) {
             relay = [relay]
         }
@@ -180,7 +196,8 @@ export const methodHandler = ({
     option,
     headConfig,
     result,
-    transfer
+    transfer,
+    extra
 }, next) => {
     // 请求成功的链接是登录入口, 没有被上面的错误拦截, 则视为登录成功
     if (urlKey === option.loginUrl) {
@@ -190,7 +207,7 @@ export const methodHandler = ({
         auth.logout()
     }
     // 如果存在当前的请求方法, 先根据配置进行处理, 再判断是否需要转交给 json-server
-    let formatResult = data[method] && data.format ? data.format(method, params, result, { url }) : undefined;
+    let formatResult = data[method] && data.format ? data.format(method, params, result, extra) : undefined;
     if (formatResult) {
         result = formatResult;
     } else if (transfer) {
@@ -218,6 +235,7 @@ export const methodHandler = ({
 export default {
     Http,
     getInfo,
+    once,
     formatResult,
     mockResult,
     authHandler,

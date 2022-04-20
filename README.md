@@ -91,15 +91,40 @@ module.exports = {
 使用
 ```javascript
 // webpack.config.js
+const path = require('path');
 const KsMock = require("ks-mock");
 module.exports = {
   ...
   plugins: [
     new KsMock({
-      mockData: {}, 
+      // // 静态文件目录
+      // static: path.join(__dirname, 'upload'),
+
+      // 上传文件/写入文件前的钩子
+      // beforeUpload(req, file, done) {
+      //   // 参数: 错误对象, 要存储的目录
+      //   done(null, '')
+      // },
+      // beforeWrite(req, file, done) {
+      //   // 参数: 错误对象, 要存储的文件名
+      //   done(null, '')
+      // },
+
+      mockData: {},
       headConfig: null,
       crossDomain: true,
-      port: 3030
+      port: 3030,
+
+      // // 配置路由重写规则
+      // rules: {
+      //   '/api/*': '/api?name=$1'
+      // },
+
+      // // 配置https证书
+      // https: {
+      //   key: '',
+      //   cert: ''
+      // }
     })
     ...
   ]
@@ -124,7 +149,7 @@ module.exports = {
 |- package.json  
 |- rollup.config.js  <font color="green">rollup配置</font>  
 
-
+ string | ((jsonServer: Object, server: Object) => void)
 ### 配置项
 |属性|类型|默认值|说明|
 |--|--|--|--|
@@ -132,6 +157,9 @@ module.exports = {
 | headConfig | object | null | 服务器请求头设置 |
 | crossDomain | boolean | true | 是否允许跨域 当 headConfig 不为空时, 忽略该项 |
 | port | number | 3030 | 端口号 |
+| static | object/function | __dirname + '/public' | 静态文件目录 |
+| beforeUpload | function | undefined | 上传文件前的钩子 |
+| beforeWrite | function | undefined | 写入文件前的钩子 |
 | https | object/undefined | undefined | https配置 |
 | rules | object | - | 路由重写规则, 参考 [json-server rewriter](https://github.com/typicode/json-server#rewriter-example) |
 | loginUrl | string | - | 登录地址, 如果配置了loginUrl, 那么除登录和public属性为true的接口外, 其它接口必须在登录之后才可以正常执行 |
