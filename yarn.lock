@@ -1647,7 +1647,7 @@ growly@^1.3.0:
   resolved "https://registry.npm.taobao.org/growly/download/growly-1.3.0.tgz#f10748cbe76af964b7c96c93c6bcc28af120c081"
   integrity sha1-8QdIy+dq+WS3yWyTxrzCivEgwIE=
 
-handlebars@*, handlebars@^4.0.6, handlebars@^4.1.2, handlebars@^4.5.3:
+handlebars@*, handlebars@^4.0.6, handlebars@^4.1.2:
   version "4.5.3"
   resolved "https://registry.npm.taobao.org/handlebars/download/handlebars-4.5.3.tgz#5cf75bd8714f7605713511a56be7c349becb0482"
   integrity sha1-XPdb2HFPdgVxNRGla+fDSb7LBII=
@@ -1720,11 +1720,9 @@ has@^1.0.3:
     function-bind "^1.1.1"
 
 highlight.js@^9.13.1:
-  version "9.17.1"
-  resolved "https://registry.npm.taobao.org/highlight.js/download/highlight.js-9.17.1.tgz?cache=0&sync_timestamp=1576163806990&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fhighlight.js%2Fdownload%2Fhighlight.js-9.17.1.tgz#14a4eded23fd314b05886758bb906e39dd627f9a"
-  integrity sha1-FKTt7SP9MUsFiGdYu5BuOd1if5o=
-  dependencies:
-    handlebars "^4.5.3"
+  version "9.18.5"
+  resolved "https://registry.yarnpkg.com/highlight.js/-/highlight.js-9.18.5.tgz#d18a359867f378c138d6819edfc2a8acd5f29825"
+  integrity sha512-a5bFyofd/BHCX52/8i8uJkjr9DYwXIPnM/plwI6W7ezItLGqzt7X2G2nXuYSfsIJdkwwj/g9DG1LkcGJI/dDoA==
 
 hosted-git-info@^2.1.4:
   version "2.8.5"
